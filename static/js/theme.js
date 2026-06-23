@@ -8,8 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const themeIcon = document.querySelector('.theme-icon');
     
     // Sistem temasını kontrol et
-    const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const savedTheme = localStorage.getItem('theme') || (prefersDarkMode ? 'dark' : 'light');
+    const preferslightMode = window.matchMedia('(prefers-color-scheme: light)').matches;
+    const savedTheme = localStorage.getItem('theme') || (preferslightMode ? 'dark' : 'light');
     
     // Temayı uygula
     applyTheme(savedTheme);
