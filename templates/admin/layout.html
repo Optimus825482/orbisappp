@@ -83,11 +83,11 @@
     </script>
 
     <!-- Admin CSS (tokens → base → layout → components → motion) -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/tokens.css') }}?v=20260623-1" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/base.css') }}?v=20260623-1" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/layout.css') }}?v=20260623-1" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/components.css') }}?v=20260623-1" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/motion.css') }}?v=20260623-1" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/tokens.css') }}?v=20260623-2" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/base.css') }}?v=20260623-2" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/layout.css') }}?v=20260623-2" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/components.css') }}?v=20260623-2" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/motion.css') }}?v=20260623-2" />
 
     {% block head %}{% endblock %}
   </head>
@@ -228,9 +228,9 @@
     <div id="toast-container" class="toast-container" role="region" aria-label="Bildirimler"></div>
 
     <!-- Admin JS -->
-    <script src="{{ url_for('static', filename='js/admin/theme.js') }}?v=20260623-1" defer></script>
-    <script src="{{ url_for('static', filename='js/admin/shortcuts.js') }}?v=20260623-1" defer></script>
-    <script src="{{ url_for('static', filename='js/admin/charts.js') }}?v=20260623-1" defer></script>
+    <script src="{{ url_for('static', filename='js/admin/theme.js') }}?v=20260623-2" defer></script>
+    <script src="{{ url_for('static', filename='js/admin/shortcuts.js') }}?v=20260623-2" defer></script>
+    <script src="{{ url_for('static', filename='js/admin/charts.js') }}?v=20260623-2" defer></script>
 
     <script>
       // Clock (cheap, render-side)
@@ -287,6 +287,32 @@
         if (isNaN(d.getTime())) return '—';
         return d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
       };
+
+      // Sidebar toggle (hamburger) — mobile + desktop collapse
+      (function () {
+        var btn = document.getElementById('sidebar-toggle');
+        if (!btn) return;
+        var STORAGE_KEY = 'orbis-admin-sidebar';
+        var initial = localStorage.getItem(STORAGE_KEY);
+        if (initial === 'collapsed') {
+          document.body.classList.add('sidebar-collapsed');
+          btn.setAttribute('aria-expanded', 'false');
+        }
+        btn.addEventListener('click', function () {
+          var isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+          btn.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+          try { localStorage.setItem(STORAGE_KEY, isCollapsed ? 'collapsed' : 'open'); } catch (e) {}
+        });
+        // ESC ile kapat (mobile)
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && window.innerWidth < 768 &&
+              !document.body.classList.contains('sidebar-collapsed')) {
+            document.body.classList.add('sidebar-collapsed');
+            btn.setAttribute('aria-expanded', 'false');
+            try { localStorage.setItem(STORAGE_KEY, 'collapsed'); } catch (e) {}
+          }
+        });
+      })();
     </script>
 
     <!-- Service worker (admin PWA) -->

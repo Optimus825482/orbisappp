@@ -324,3 +324,35 @@
     display: none;
   }
 }
+
+/* ─── Sidebar toggle (hamburger) ───────────────────── */
+body.sidebar-collapsed .admin-sidebar {
+  width: 0;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  transition: width 220ms var(--ease-out-quint, ease);
+}
+body.sidebar-collapsed .admin-main {
+  margin-left: 0 !important;
+  grid-column: 1 / -1;
+}
+/* Desktop collapsed: icons-only, no text labels */
+@media (min-width: 1025px) {
+  body.sidebar-collapsed .admin-sidebar {
+    width: 64px;
+  }
+  body.sidebar-collapsed .sidebar-brand-text,
+  body.sidebar-collapsed .sidebar-section-label,
+  body.sidebar-collapsed .sidebar-link-label {
+    display: none;
+  }
+  body.sidebar-collapsed .sidebar-link {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  body.sidebar-collapsed .sidebar-link-icon {
+    margin-right: 0;
+  }
+}
