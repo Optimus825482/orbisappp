@@ -122,7 +122,7 @@
           <nav class="topbar-breadcrumb" aria-label="Breadcrumb">
             <a href="{{ url_for('admin.dashboard') }}">Admin</a>
             <span class="material-symbols-outlined">chevron_right</span>
-            <span class="topbar-breadcrumb-current">{% block page_title %}Dashboard{% endblock %}</span>
+            <span class="topbar-breadcrumb-current">{{ self.page_title() }}</span>
           </nav>
         </div>
         <div class="topbar-right">
