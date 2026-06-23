@@ -29,5 +29,8 @@ firebase-admin>=6.4.0
 google-api-python-client>=2.140.0
 google-auth>=2.30.0
 
+# Google Analytics 4 Data API (admin dashboard)
+google-analytics-data>=0.18.0
+
 # Deployment (Vercel uses its own runtime)
 serverless-wsgi==3.0.2
