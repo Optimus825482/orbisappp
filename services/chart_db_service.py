@@ -420,23 +420,19 @@ def cleanup_old_transits(days_old: int = 7) -> int:
     
     try:
         cutoff = (datetime.utcnow() - timedelta(days=days_old)).isoformat()
-        
-            old_docs = (
-                db.collection("daily_transits")
-                .where(filter=("_created_at", "<", cutoff))
-                .limit(100)
-                .stream()
-            )
-        
+        collection = db.collection("daily_transits")
+        query = collection.where("_created_at", "<", cutoff).limit(100)
+        old_docs = query.stream()
+
         deleted = 0
         for doc in old_docs:
             doc.reference.delete()
             deleted += 1
-        
+
         if deleted > 0:
-            logger.info(f"[ChartDB] 🧹 {deleted} eski transit verisi temizlendi")
+            logger.info(f"[ChartDB] Eski transit sayisi: {deleted}")
         return deleted
-        
+
     except Exception as e:
-        logger.error(f"[ChartDB] Transit temizleme hatası: {e}")
+        logger.error(f"[ChartDB] Transit temizleme hatasi: {e}")
         return 0
