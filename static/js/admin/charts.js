@@ -153,9 +153,9 @@
   }
 
   // ─── Re-render on theme change ───────────────────────
-  // ÖNEMLİ: themechange listener sadece data-chart-original attribute'u olan
-  // elemanları render eder. Sayfa JS'i sonradan data-chart'i override etmişse,
-  // o elemanı tekrar çizme (live API call'ı içeriğini ezerdik).
+  // Sayfa JS'i sonradan OrbisCharts.lineChart() ile bu elemana yeni data
+  // set ettiğinde data-chart-original attribute'unu SİL. Böylece themechange
+  // listener sadece hâlâ initial placeholder data kullanan elemanları render eder.
   document.addEventListener('orbis:themechange', function () {
     var els = document.querySelectorAll('[data-chart-original]');
     els.forEach(function (el) {
@@ -168,8 +168,11 @@
     });
   });
 
-  // ─── Initial render: data-chart attribute'u olan tüm elemanları çiz ─
-  // (data-chart-original'a kopyala ki themechange ezmesin)
+  // ─── Initial render ─────────────────────────────────
+  // data-chart attribute'u olan tüm elemanları ilk yüklemede çiz.
+  // data-chart-original'a kopyala ki themechange listener onları bulabilsin.
+  // Sayfa JS sonradan OrbisCharts.lineChart() çağırırsa, o JS'te
+  // data-chart-original.removeAttribute('data-chart-original') yapmalı.
   function initialRender() {
     var els = document.querySelectorAll('[data-chart]');
     els.forEach(function (el) {
@@ -188,13 +191,20 @@
     initialRender();
   }
 
-  // ─── Public API ──────────────────────────────────────
+  // Public API override hooks: sayfa JS artık OrbisCharts ile chart çizdiğinde
+  // data-chart-original attribute'unu sil ki themechange tekrar çizmesin.
+  var _origLine = lineChart;
+  var _origBar = barChart;
+  var _origSpark = sparkline;
+  function _markLiveRendered(el) {
+    if (el && el.removeAttribute) el.removeAttribute('data-chart-original');
+  }
   window.OrbisCharts = {
-    sparkline: sparkline,
-    line: lineChart,        // alias
-    lineChart: lineChart,
-    bar: barChart,          // alias
-    barChart: barChart
+    sparkline: function (el, values, opts) { _origSpark(el, values, opts); _markLiveRendered(el); },
+    line: function (el, series, opts) { _origLine(el, series, opts); _markLiveRendered(el); },
+    lineChart: function (el, series, opts) { _origLine(el, series, opts); _markLiveRendered(el); },
+    bar: function (el, bars, opts) { _origBar(el, bars, opts); _markLiveRendered(el); },
+    barChart: function (el, bars, opts) { _origBar(el, bars, opts); _markLiveRendered(el); }
   };
 
   // Reduced motion → no animation on chart entry
