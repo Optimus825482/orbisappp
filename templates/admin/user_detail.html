@@ -1,631 +1,363 @@
-{% extends "admin/layout.html" %} {% block title %}ORBIS Admin - Kullanıcı
-Detay{% endblock %} {% block page_title %}Kullanıcı Detayı{% endblock %} {%
-block page_subtitle %}Kullanıcı bilgileri ve işlem geçmişi{% endblock %} {%
-block content %}
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-  <!-- User Profile Card -->
-  <div class="lg:col-span-1">
-    <div class="glass-card rounded-2xl p-6 sticky top-24">
-      <!-- Loading State -->
-      <div id="profile-loading" class="text-center py-8">
-        <span class="material-icons-round animate-spin text-3xl text-primary"
-          >refresh</span
-        >
-        <p class="text-slate-500 mt-2">Yükleniyor...</p>
-      </div>
+{% extends "admin/layout.html" %}
+{% block title %}ORBIS Admin · Kullanıcı Detayı{% endblock %}
+{% block page_title %}Kullanıcı Detayı{% endblock %}
+{% block page_subtitle %}Kullanıcı bilgileri, krediler ve işlem geçmişi{% endblock %}
 
-      <!-- Profile Content -->
-      <div id="profile-content" class="hidden">
-        <!-- Avatar & Name -->
-        <div class="text-center mb-6">
-          <img
-            id="user-avatar"
-            src=""
-            alt=""
-            class="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-primary/20"
-          />
-          <h2 id="user-name" class="font-display font-bold text-xl"></h2>
-          <p id="user-email" class="text-sm text-slate-500 mt-1"></p>
-        </div>
-
-        <!-- Status Badge -->
-        <div id="status-badge" class="text-center mb-6"></div>
-
-        <!-- Stats -->
-        <div class="grid grid-cols-2 gap-3 mb-6">
-          <div class="p-4 bg-white/5 rounded-xl text-center">
-            <div id="user-credits" class="text-2xl font-bold text-primary">
-              0
-            </div>
-            <div
-              class="text-[10px] text-slate-500 uppercase tracking-wider mt-1"
-            >
-              Kredi
-            </div>
-          </div>
-          <div class="p-4 bg-white/5 rounded-xl text-center">
-            <div id="user-analyses" class="text-2xl font-bold text-accent">
-              0
-            </div>
-            <div
-              class="text-[10px] text-slate-500 uppercase tracking-wider mt-1"
-            >
-              Analiz
-            </div>
+{% block content %}
+<div class="grid grid--3 stagger" style="grid-template-columns: 1fr 2fr; gap: var(--space-6);">
+  <!-- Profile -->
+  <aside class="stack-4">
+    <section class="card" id="profile-card">
+      <header class="card-header">
+        <h2 class="card-title">Profil</h2>
+        <span id="status-badge"></span>
+      </header>
+      <div class="stack-4" style="padding: var(--space-6);">
+        <!-- Avatar -->
+        <div class="row" style="gap: var(--space-3);">
+          <img id="user-avatar" src="" alt="" style="width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--primary-soft); background: var(--surface-2);" />
+          <div style="min-width: 0; flex: 1;">
+            <h3 id="user-name" style="font-size: 18px; font-weight: 600; margin: 0; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></h3>
+            <p id="user-email" style="font-size: 12px; color: var(--ink-muted); margin: 4px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></p>
           </div>
         </div>
 
-        <!-- Info List -->
-        <div class="space-y-3 text-sm">
-          <div class="flex justify-between py-2 border-b border-border-dark/50">
-            <span class="text-slate-500">Paket</span>
-            <span id="user-package" class="font-medium">-</span>
+        <!-- Quick Stats -->
+        <div class="grid grid--2" style="gap: var(--space-2);">
+          <div style="padding: 12px; background: var(--surface-2); border-radius: var(--radius-md); text-align: center;">
+            <div class="eyebrow">Kredi</div>
+            <div class="metric-value tabular" id="user-credits" style="font-size: 20px; color: var(--primary);">—</div>
           </div>
-          <div class="flex justify-between py-2 border-b border-border-dark/50">
-            <span class="text-slate-500">Premium Bitiş</span>
-            <span id="user-expiry" class="font-medium">-</span>
+          <div style="padding: 12px; background: var(--surface-2); border-radius: var(--radius-md); text-align: center;">
+            <div class="eyebrow">Analiz</div>
+            <div class="metric-value tabular" id="user-analyses" style="font-size: 20px; color: var(--accent);">—</div>
           </div>
-          <div class="flex justify-between py-2 border-b border-border-dark/50">
-            <span class="text-slate-500">Kayıt Tarihi</span>
-            <span id="user-created" class="font-medium">-</span>
+        </div>
+
+        <!-- Info -->
+        <div class="stack-2">
+          <div class="info-row">
+            <span class="info-label">Paket</span>
+            <span class="info-value" id="user-package">—</span>
           </div>
-          <div class="flex justify-between py-2">
-            <span class="text-slate-500">Son Aktivite</span>
-            <span id="user-last-active" class="font-medium">-</span>
+          <div class="info-row">
+            <span class="info-label">Premium Bitiş</span>
+            <span class="info-value" id="user-expiry">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Kayıt Tarihi</span>
+            <span class="info-value" id="user-created">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Son Aktivite</span>
+            <span class="info-value" id="user-last-active">—</span>
           </div>
         </div>
 
         <!-- Actions -->
-        <div class="mt-6 space-y-2">
-          <button
-            onclick="openPremiumModal()"
-            class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 rounded-xl text-sm font-medium transition-colors"
-          >
-            <span class="material-icons-round text-lg">diamond</span>
+        <div class="stack-2">
+          <button type="button" onclick="openPremiumModal()" class="action-btn action-btn--warning">
+            <span class="material-symbols-outlined" aria-hidden="true">diamond</span>
             Premium Yönet
           </button>
-          <button
-            onclick="openCreditModal()"
-            class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary/20 hover:bg-primary/30 text-primary rounded-xl text-sm font-medium transition-colors"
-          >
-            <span class="material-icons-round text-lg">toll</span>
+          <button type="button" onclick="openCreditModal()" class="action-btn action-btn--primary">
+            <span class="material-symbols-outlined" aria-hidden="true">toll</span>
             Kredi Ekle/Çıkar
           </button>
-          <button
-            onclick="sendPushToUser()"
-            class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-accent/20 hover:bg-accent/30 text-accent rounded-xl text-sm font-medium transition-colors"
-          >
-            <span class="material-icons-round text-lg">notifications</span>
+          <button type="button" onclick="sendPushToUser()" class="action-btn action-btn--accent">
+            <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
             Push Gönder
           </button>
         </div>
+
+        <a href="{{ url_for('admin.users') }}" class="btn btn--ghost" style="width: 100%; height: 38px; text-decoration: none;">
+          <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+          Kullanıcılara Dön
+        </a>
       </div>
-    </div>
-  </div>
+    </section>
+  </aside>
 
-  <!-- Right Column -->
-  <div class="lg:col-span-2 space-y-6">
-    <!-- Daily Usage -->
-    <div class="glass-card rounded-2xl p-6">
-      <h3 class="font-display font-bold text-lg mb-4 flex items-center gap-2">
-        <span class="material-icons-round text-primary">today</span>
-        Günlük Kullanım
-      </h3>
-
-      <div id="daily-usage" class="grid grid-cols-3 gap-4">
-        <div class="p-4 bg-white/5 rounded-xl text-center">
-          <div id="daily-date" class="text-sm text-slate-400">-</div>
-          <div class="text-[10px] text-slate-600 mt-1">Tarih</div>
-        </div>
-        <div class="p-4 bg-white/5 rounded-xl text-center">
-          <div id="daily-count" class="text-2xl font-bold">0</div>
-          <div class="text-[10px] text-slate-600 mt-1">Kullanım</div>
-        </div>
-        <div class="p-4 bg-white/5 rounded-xl text-center">
-          <div id="daily-ads" class="text-2xl font-bold">0</div>
-          <div class="text-[10px] text-slate-600 mt-1">Reklam İzlendi</div>
+  <!-- Tabs + Content -->
+  <div class="stack-4">
+    <section class="card">
+      <header class="card-header">
+        <h2 class="card-title">İşlem Geçmişi</h2>
+        <span class="badge badge--neutral">Son 20</span>
+      </header>
+      <div id="purchases-container" style="padding: var(--space-4) var(--space-6);">
+        <div class="empty-state">
+          <span class="material-symbols-outlined" aria-hidden="true">receipt_long</span>
+          <div>İşlem geçmişi yükleniyor…</div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- FCM Tokens -->
-    <div class="glass-card rounded-2xl p-6">
-      <h3 class="font-display font-bold text-lg mb-4 flex items-center gap-2">
-        <span class="material-icons-round text-primary">devices</span>
-        Kayıtlı Cihazlar
-      </h3>
-
-      <div id="fcm-tokens" class="space-y-2">
-        <p class="text-slate-500 text-sm">Yükleniyor...</p>
+    <section class="card">
+      <header class="card-header">
+        <h2 class="card-title">Bildirim Token'ları</h2>
+        <span class="badge badge--neutral" id="token-count">0</span>
+      </header>
+      <div id="tokens-container" style="padding: var(--space-4) var(--space-6);">
+        <div class="empty-state">
+          <span class="material-symbols-outlined" aria-hidden="true">notifications_active</span>
+          <div>Token listesi yükleniyor…</div>
+        </div>
       </div>
-    </div>
-
-    <!-- Purchase History -->
-    <div class="glass-card rounded-2xl p-6">
-      <h3 class="font-display font-bold text-lg mb-4 flex items-center gap-2">
-        <span class="material-icons-round text-primary">receipt_long</span>
-        Satın Alma Geçmişi
-      </h3>
-
-      <div id="purchase-history" class="space-y-2">
-        <p class="text-slate-500 text-sm">Yükleniyor...</p>
-      </div>
-    </div>
+    </section>
   </div>
 </div>
 
 <!-- Premium Modal -->
-<div
-  id="premium-modal"
-  class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4"
->
-  <div
-    class="bg-surface-dark rounded-2xl p-6 w-full max-w-md border border-border-dark"
-  >
-    <div class="flex items-center justify-between mb-6">
-      <h3 class="font-display font-bold text-lg">Premium Yönetimi</h3>
-      <button
-        onclick="closePremiumModal()"
-        class="p-2 hover:bg-white/5 rounded-lg"
-      >
-        <span class="material-icons-round text-slate-400">close</span>
+<div id="premium-modal" class="modal" hidden>
+  <div class="modal-backdrop" onclick="closeModal('premium-modal')"></div>
+  <div class="modal-card">
+    <header class="card-header">
+      <h2 class="card-title">Premium Yönetimi</h2>
+      <button type="button" onclick="closeModal('premium-modal')" class="icon-btn icon-btn--ghost" aria-label="Kapat">
+        <span class="material-symbols-outlined">close</span>
       </button>
-    </div>
-
-    <div class="space-y-4">
-      <label
-        class="flex items-center justify-between p-4 bg-white/5 rounded-xl cursor-pointer"
-      >
-        <div class="flex items-center gap-3">
-          <span class="material-icons-round text-yellow-400">diamond</span>
-          <span>Premium Aktif</span>
-        </div>
-        <input
-          type="checkbox"
-          id="modal-premium"
-          class="w-5 h-5 rounded bg-white/10 border-border-dark text-primary"
-        />
-      </label>
-
+    </header>
+    <div class="stack-3" style="padding: var(--space-6);">
       <div>
-        <label class="block text-xs text-slate-500 mb-1">Paket</label>
-        <select
-          id="modal-package"
-          class="w-full px-3 py-2 bg-white/5 border border-border-dark rounded-lg text-sm"
-        >
-          <option value="admin_grant">Admin Grant</option>
+        <label for="premium-package" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink); margin-bottom: 8px; display: block;">Paket</label>
+        <select id="premium-package" class="select" style="width: 100%;">
+          <option value="daily">Günlük</option>
           <option value="monthly">Aylık</option>
           <option value="yearly">Yıllık</option>
-          <option value="lifetime">Ömür Boyu</option>
+          <option value="lifetime">Lifetime</option>
         </select>
       </div>
-
       <div>
-        <label class="block text-xs text-slate-500 mb-1">Süre (Ay)</label>
-        <input
-          type="number"
-          id="modal-months"
-          value="1"
-          min="1"
-          class="w-full px-3 py-2 bg-white/5 border border-border-dark rounded-lg text-sm"
-        />
+        <label for="premium-months" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink); margin-bottom: 8px; display: block;">Süre (ay)</label>
+        <input type="number" id="premium-months" class="input" value="1" min="1" />
       </div>
-
       <div>
-        <label class="block text-xs text-slate-500 mb-1">Bonus Kredi</label>
-        <input
-          type="number"
-          id="modal-bonus-credits"
-          value="0"
-          min="0"
-          class="w-full px-3 py-2 bg-white/5 border border-border-dark rounded-lg text-sm"
-        />
+        <label for="premium-credits" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink); margin-bottom: 8px; display: block;">Bonus Kredi</label>
+        <input type="number" id="premium-credits" class="input" value="0" min="0" />
       </div>
     </div>
-
-    <div class="flex gap-3 mt-6">
-      <button
-        onclick="closePremiumModal()"
-        class="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 rounded-xl text-sm font-medium"
-      >
-        İptal
-      </button>
-      <button
-        onclick="savePremium()"
-        class="flex-1 px-4 py-3 bg-yellow-500 hover:bg-yellow-600 text-black rounded-xl text-sm font-medium"
-      >
-        Kaydet
-      </button>
+    <div class="row" style="gap: var(--space-3); padding: var(--space-6); border-top: 1px solid var(--border);">
+      <button type="button" onclick="savePremium()" class="btn btn--primary" style="flex: 1;">Premium Aktive Et</button>
+      <button type="button" onclick="removePremium()" class="btn btn--danger">Kaldır</button>
+      <button type="button" onclick="closeModal('premium-modal')" class="btn btn--ghost">İptal</button>
     </div>
   </div>
 </div>
 
 <!-- Credit Modal -->
-<div
-  id="credit-modal"
-  class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4"
->
-  <div
-    class="bg-surface-dark rounded-2xl p-6 w-full max-w-md border border-border-dark"
-  >
-    <div class="flex items-center justify-between mb-6">
-      <h3 class="font-display font-bold text-lg">Kredi İşlemi</h3>
-      <button
-        onclick="closeCreditModal()"
-        class="p-2 hover:bg-white/5 rounded-lg"
-      >
-        <span class="material-icons-round text-slate-400">close</span>
+<div id="credit-modal" class="modal" hidden>
+  <div class="modal-backdrop" onclick="closeModal('credit-modal')"></div>
+  <div class="modal-card">
+    <header class="card-header">
+      <h2 class="card-title">Kredi Yönetimi</h2>
+      <button type="button" onclick="closeModal('credit-modal')" class="icon-btn icon-btn--ghost" aria-label="Kapat">
+        <span class="material-symbols-outlined">close</span>
       </button>
-    </div>
-
-    <div class="space-y-4">
+    </header>
+    <div class="stack-3" style="padding: var(--space-6);">
       <div>
-        <label class="block text-xs text-slate-500 mb-1">İşlem Tipi</label>
-        <select
-          id="modal-credit-action"
-          class="w-full px-3 py-2 bg-white/5 border border-border-dark rounded-lg text-sm"
-        >
-          <option value="add">Kredi Ekle</option>
-          <option value="subtract">Kredi Çıkar</option>
-          <option value="set">Kredi Ayarla</option>
+        <label for="credit-action" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink); margin-bottom: 8px; display: block;">İşlem</label>
+        <select id="credit-action" class="select" style="width: 100%;">
+          <option value="add">Ekle (+)</option>
+          <option value="subtract">Çıkar (−)</option>
+          <option value="set">Ayarla (=)</option>
         </select>
       </div>
-
       <div>
-        <label class="block text-xs text-slate-500 mb-1">Miktar</label>
-        <input
-          type="number"
-          id="modal-credit-amount"
-          value="10"
-          min="0"
-          class="w-full px-3 py-2 bg-white/5 border border-border-dark rounded-lg text-sm"
-        />
+        <label for="credit-amount" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink); margin-bottom: 8px; display: block;">Miktar</label>
+        <input type="number" id="credit-amount" class="input" value="10" min="0" />
       </div>
     </div>
-
-    <div class="flex gap-3 mt-6">
-      <button
-        onclick="closeCreditModal()"
-        class="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 rounded-xl text-sm font-medium"
-      >
-        İptal
-      </button>
-      <button
-        onclick="saveCredits()"
-        class="flex-1 px-4 py-3 bg-primary hover:bg-primary/80 rounded-xl text-sm font-medium"
-      >
-        Uygula
-      </button>
+    <div class="row" style="gap: var(--space-3); padding: var(--space-6); border-top: 1px solid var(--border);">
+      <button type="button" onclick="saveCredits()" class="btn btn--primary" style="flex: 1;">Uygula</button>
+      <button type="button" onclick="closeModal('credit-modal')" class="btn btn--ghost">İptal</button>
     </div>
   </div>
 </div>
+{% endblock %}
 
-<!-- Push Modal -->
-<div
-  id="push-modal"
-  class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4"
->
-  <div
-    class="bg-surface-dark rounded-2xl p-6 w-full max-w-md border border-border-dark"
-  >
-    <div class="flex items-center justify-between mb-6">
-      <h3 class="font-display font-bold text-lg">Push Bildirim Gönder</h3>
-      <button
-        onclick="closePushModal()"
-        class="p-2 hover:bg-white/5 rounded-lg"
-      >
-        <span class="material-icons-round text-slate-400">close</span>
-      </button>
-    </div>
-
-    <div class="space-y-4">
-      <div>
-        <label class="block text-xs text-slate-500 mb-1">Başlık</label>
-        <input
-          type="text"
-          id="push-title"
-          placeholder="Bildirim başlığı"
-          class="w-full px-3 py-2 bg-white/5 border border-border-dark rounded-lg text-sm"
-        />
-      </div>
-
-      <div>
-        <label class="block text-xs text-slate-500 mb-1">Mesaj</label>
-        <textarea
-          id="push-body"
-          rows="3"
-          placeholder="Bildirim içeriği"
-          class="w-full px-3 py-2 bg-white/5 border border-border-dark rounded-lg text-sm resize-none"
-        ></textarea>
-      </div>
-    </div>
-
-    <div class="flex gap-3 mt-6">
-      <button
-        onclick="closePushModal()"
-        class="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 rounded-xl text-sm font-medium"
-      >
-        İptal
-      </button>
-      <button
-        onclick="sendPush()"
-        class="flex-1 px-4 py-3 bg-accent hover:bg-accent/80 rounded-xl text-sm font-medium"
-      >
-        Gönder
-      </button>
-    </div>
-  </div>
-</div>
-{% endblock %} {% block scripts %}
+{% block scripts %}
 <script>
-  const userId = "{{ user_id }}";
-  let userData = null;
+const USER_ID = {{ user_id | tojson }};
+let USER_DATA = null;
 
-  async function loadUserData() {
-    try {
-      const res = await fetch(`/admin/api/users/${userId}`);
-      const data = await res.json();
-
-      if (data.success) {
-        userData = data.data;
-        renderUserProfile();
-      } else {
-        throw new Error(data.error);
-      }
-    } catch (error) {
-      console.error("Load user error:", error);
-      showToast("Kullanıcı yüklenemedi", "error");
-    }
-  }
-
-  function renderUserProfile() {
-    document.getElementById("profile-loading").classList.add("hidden");
-    document.getElementById("profile-content").classList.remove("hidden");
-
-    // Basic info
-    document.getElementById("user-avatar").src =
-      userData.photoURL ||
-      `https://ui-avatars.com/api/?name=${encodeURIComponent(
-        userData.displayName || "U"
-      )}&background=5b2bee&color=fff`;
-    document.getElementById("user-name").textContent =
-      userData.displayName || "İsimsiz";
-    document.getElementById("user-email").textContent = userData.email || "-";
-
-    // Status badge
-    const statusBadge = document.getElementById("status-badge");
-    if (userData.isPremium) {
-      statusBadge.innerHTML = `
-                <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-500/20 text-yellow-400">
-                    <span class="material-icons-round">diamond</span>
-                    <span class="font-medium">Premium Üye</span>
-                </span>
-            `;
+async function loadUser() {
+  try {
+    const res = await fetch(`/admin/api/users/${USER_ID}`, { credentials: 'same-origin' });
+    const json = await res.json();
+    if (json.success) {
+      USER_DATA = json.data;
+      renderUser();
+      renderPurchases();
+      renderTokens();
     } else {
-      statusBadge.innerHTML = `
-                <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-500/20 text-slate-400">
-                    <span class="material-icons-round">person</span>
-                    <span class="font-medium">Ücretsiz Üye</span>
-                </span>
-            `;
+      showToast('Kullanıcı yüklenemedi: ' + (json.message || ''), 'error');
     }
+  } catch (e) {
+    showToast('Bağlantı hatası', 'error');
+    console.error(e);
+  }
+}
 
-    // Stats
-    document.getElementById("user-credits").textContent = userData.credits || 0;
-    document.getElementById("user-analyses").textContent =
-      userData.totalAnalyses || 0;
+function renderUser() {
+  const d = USER_DATA;
+  document.title = `${d.email || 'Kullanıcı'} · ORBIS Admin`;
+  document.getElementById('user-avatar').src = d.photoURL || '';
+  document.getElementById('user-name').textContent = d.displayName || d.email || 'Anonim';
+  document.getElementById('user-email').textContent = d.email || '—';
+  document.getElementById('user-credits').textContent = d.credits != null ? d.credits : '—';
+  document.getElementById('user-analyses').textContent = d.totalAnalyses != null ? d.totalAnalyses : '—';
+  document.getElementById('user-package').textContent = d.premiumPackageId || 'Ücretsiz';
+  document.getElementById('user-expiry').textContent = d.premiumExpiry ? new Date(d.premiumExpiry).toLocaleDateString('tr-TR') : '—';
+  document.getElementById('user-created').textContent = d.createdAt ? new Date(d.createdAt).toLocaleDateString('tr-TR') : '—';
+  document.getElementById('user-last-active').textContent = d.dailyUsage && d.dailyUsage.date ? d.dailyUsage.date : '—';
 
-    // Info
-    document.getElementById("user-package").textContent =
-      userData.premiumPackageId || "-";
-    document.getElementById("user-expiry").textContent = userData.premiumExpiry
-      ? formatDate(userData.premiumExpiry)
-      : "-";
-    document.getElementById("user-created").textContent = formatDate(
-      userData.createdAt
-    );
-    document.getElementById("user-last-active").textContent =
-      userData.dailyUsage?.date || "-";
+  const status = document.getElementById('status-badge');
+  if (d.isPremium) {
+    status.innerHTML = '<span class="badge badge--dot badge--success">Premium</span>';
+  } else {
+    status.innerHTML = '<span class="badge badge--dot badge--neutral">Ücretsiz</span>';
+  }
+}
 
-    // Daily usage
-    if (userData.dailyUsage) {
-      document.getElementById("daily-date").textContent =
-        userData.dailyUsage.date || "-";
-      document.getElementById("daily-count").textContent =
-        userData.dailyUsage.count || 0;
-      document.getElementById("daily-ads").textContent =
-        userData.dailyUsage.adsWatched || 0;
-    }
+function renderPurchases() {
+  const container = document.getElementById('purchases-container');
+  const list = USER_DATA.purchases || [];
+  if (!list.length) {
+    container.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><div>Henüz işlem yok</div></div>';
+    return;
+  }
+  container.innerHTML = list.map(p => {
+    const type = p.type === 'premium' ? 'badge--warning' : 'badge--primary';
+    const label = p.type === 'premium' ? 'Premium' : 'Kredi';
+    const amount = p.type === 'premium' ? p.packageId : `${p.credits} kredi`;
+    const ts = p.timestamp ? new Date(p.timestamp).toLocaleString('tr-TR') : '';
+    return `
+      <div class="list-row">
+        <div class="row" style="gap: var(--space-3);">
+          <span class="badge ${type}">${label}</span>
+          <div>
+            <div style="font-size: 13px; font-weight: 500; color: var(--ink);">${escapeHtml(amount)}</div>
+            <div style="font-size: 11px; color: var(--ink-faint);">${escapeHtml(ts)}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
 
-    // FCM Tokens
-    const tokensDiv = document.getElementById("fcm-tokens");
-    if (userData.fcmTokens && userData.fcmTokens.length > 0) {
-      tokensDiv.innerHTML = userData.fcmTokens
-        .map(
-          (t) => `
-                <div class="flex items-center gap-3 p-3 bg-white/5 rounded-xl">
-                    <span class="material-icons-round text-slate-500">${
-                      t.platform === "android"
-                        ? "android"
-                        : t.platform === "ios"
-                        ? "phone_iphone"
-                        : "computer"
-                    }</span>
-                    <div class="flex-1 min-w-0">
-                        <div class="text-xs font-mono text-slate-400 truncate">${t.token?.substring(
-                          0,
-                          30
-                        )}...</div>
-                        <div class="text-[10px] text-slate-600">${
-                          t.platform
-                        } • ${t.updatedAt || "-"}</div>
-                    </div>
-                </div>
-            `
-        )
-        .join("");
+function renderTokens() {
+  const container = document.getElementById('tokens-container');
+  const tokens = USER_DATA.fcmTokens || [];
+  document.getElementById('token-count').textContent = tokens.length;
+  if (!tokens.length) {
+    container.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">notifications_off</span><div>Token yok</div></div>';
+    return;
+  }
+  container.innerHTML = tokens.map(t => `
+    <div class="list-row">
+      <div class="row" style="gap: var(--space-3); min-width: 0; flex: 1;">
+        <span class="metric-icon" style="background: var(--primary-soft); color: var(--primary);">
+          <span class="material-symbols-outlined" aria-hidden="true">smartphone</span>
+        </span>
+        <div style="min-width: 0; flex: 1;">
+          <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(t.token || '')}</div>
+          <div style="font-size: 10px; color: var(--ink-faint); margin-top: 2px;">Platform: ${escapeHtml(t.platform || '?')}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function openModal(id) { document.getElementById(id).hidden = false; }
+function closeModal(id) { document.getElementById(id).hidden = true; }
+
+function openPremiumModal() { openModal('premium-modal'); }
+function openCreditModal() { openModal('credit-modal'); }
+
+async function savePremium() {
+  const pkg = document.getElementById('premium-package').value;
+  const months = parseInt(document.getElementById('premium-months').value) || 1;
+  const credits = parseInt(document.getElementById('premium-credits').value) || 0;
+  try {
+    const res = await fetch(`/admin/api/users/${USER_ID}/premium`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isPremium: true, packageId: pkg, months, credits }),
+    });
+    const json = await res.json();
+    if (json.success) {
+      showToast('✅ ' + json.message, 'success');
+      closeModal('premium-modal');
+      setTimeout(loadUser, 600);
     } else {
-      tokensDiv.innerHTML =
-        '<p class="text-slate-500 text-sm">Kayıtlı cihaz yok</p>';
+      showToast('❌ ' + (json.message || 'Hata'), 'error');
     }
+  } catch (e) { showToast('❌ ' + e.message, 'error'); }
+}
 
-    // Purchase history
-    const purchasesDiv = document.getElementById("purchase-history");
-    if (userData.purchases && userData.purchases.length > 0) {
-      purchasesDiv.innerHTML = userData.purchases
-        .map(
-          (p) => `
-                <div class="flex items-center justify-between p-3 bg-white/5 rounded-xl">
-                    <div class="flex items-center gap-3">
-                        <span class="material-icons-round ${
-                          p.type === "premium"
-                            ? "text-yellow-400"
-                            : "text-primary"
-                        }">${p.type === "premium" ? "diamond" : "toll"}</span>
-                        <div>
-                            <div class="text-sm font-medium">${
-                              p.type === "premium" ? "Premium" : "Kredi"
-                            }</div>
-                            <div class="text-[10px] text-slate-500">${
-                              p.item || p.amount
-                            }</div>
-                        </div>
-                    </div>
-                    <div class="text-xs text-slate-500">${formatDate(
-                      p.timestamp
-                    )}</div>
-                </div>
-            `
-        )
-        .join("");
+async function removePremium() {
+  if (!confirm('Premium durumunu kaldırmak istediğinize emin misiniz?')) return;
+  try {
+    const res = await fetch(`/admin/api/users/${USER_ID}/premium`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isPremium: false }),
+    });
+    const json = await res.json();
+    if (json.success) {
+      showToast('✅ Premium kaldırıldı', 'success');
+      closeModal('premium-modal');
+      setTimeout(loadUser, 600);
     } else {
-      purchasesDiv.innerHTML =
-        '<p class="text-slate-500 text-sm">Satın alma geçmişi yok</p>';
+      showToast('❌ ' + (json.message || 'Hata'), 'error');
     }
-  }
+  } catch (e) { showToast('❌ ' + e.message, 'error'); }
+}
 
-  // Premium Modal
-  function openPremiumModal() {
-    document.getElementById("modal-premium").checked = userData.isPremium;
-    document.getElementById("modal-package").value =
-      userData.premiumPackageId || "admin_grant";
-    document.getElementById("premium-modal").classList.remove("hidden");
-    document.getElementById("premium-modal").classList.add("flex");
-  }
-
-  function closePremiumModal() {
-    document.getElementById("premium-modal").classList.add("hidden");
-    document.getElementById("premium-modal").classList.remove("flex");
-  }
-
-  async function savePremium() {
-    const isPremium = document.getElementById("modal-premium").checked;
-    const packageId = document.getElementById("modal-package").value;
-    const months = parseInt(document.getElementById("modal-months").value) || 1;
-    const credits =
-      parseInt(document.getElementById("modal-bonus-credits").value) || 0;
-
-    try {
-      const res = await fetch(`/admin/api/users/${userId}/premium`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isPremium, packageId, months, credits }),
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        showToast("Premium durumu güncellendi", "success");
-        closePremiumModal();
-        setTimeout(() => location.reload(), 1000);
-      } else {
-        throw new Error(data.error);
-      }
-    } catch (error) {
-      showToast("Güncelleme başarısız", "error");
+async function saveCredits() {
+  const action = document.getElementById('credit-action').value;
+  const amount = parseInt(document.getElementById('credit-amount').value) || 0;
+  try {
+    const res = await fetch(`/admin/api/users/${USER_ID}/credits`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, amount }),
+    });
+    const json = await res.json();
+    if (json.success) {
+      showToast('✅ ' + json.message, 'success');
+      closeModal('credit-modal');
+      setTimeout(loadUser, 600);
+    } else {
+      showToast('❌ ' + (json.message || 'Hata'), 'error');
     }
-  }
+  } catch (e) { showToast('❌ ' + e.message, 'error'); }
+}
 
-  // Credit Modal
-  function openCreditModal() {
-    document.getElementById("credit-modal").classList.remove("hidden");
-    document.getElementById("credit-modal").classList.add("flex");
-  }
+async function sendPushToUser() {
+  const title = prompt('Bildirim başlığı:');
+  if (!title) return;
+  const body = prompt('Bildirim içeriği:');
+  if (!body) return;
+  try {
+    const res = await fetch('/admin/api/push/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetType: 'user', target: USER_ID, title, body }),
+    });
+    const json = await res.json();
+    if (json.success) showToast('✅ Bildirim gönderildi', 'success');
+    else showToast('❌ ' + (json.message || 'Hata'), 'error');
+  } catch (e) { showToast('❌ ' + e.message, 'error'); }
+}
 
-  function closeCreditModal() {
-    document.getElementById("credit-modal").classList.add("hidden");
-    document.getElementById("credit-modal").classList.remove("flex");
-  }
-
-  async function saveCredits() {
-    const action = document.getElementById("modal-credit-action").value;
-    const amount =
-      parseInt(document.getElementById("modal-credit-amount").value) || 0;
-
-    try {
-      const res = await fetch(`/admin/api/users/${userId}/credits`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, amount }),
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        showToast("Kredi güncellendi", "success");
-        closeCreditModal();
-        setTimeout(() => location.reload(), 1000);
-      } else {
-        throw new Error(data.error);
-      }
-    } catch (error) {
-      showToast("Güncelleme başarısız", "error");
-    }
-  }
-
-  // Push Modal
-  function sendPushToUser() {
-    document.getElementById("push-modal").classList.remove("hidden");
-    document.getElementById("push-modal").classList.add("flex");
-  }
-
-  function closePushModal() {
-    document.getElementById("push-modal").classList.add("hidden");
-    document.getElementById("push-modal").classList.remove("flex");
-  }
-
-  async function sendPush() {
-    const title = document.getElementById("push-title").value;
-    const body = document.getElementById("push-body").value;
-
-    if (!title || !body) {
-      showToast("Başlık ve mesaj gerekli", "error");
-      return;
-    }
-
-    try {
-      const res = await fetch("/admin/api/push/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          targetType: "user",
-          target: userId,
-          title,
-          body,
-        }),
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        showToast("Bildirim gönderildi", "success");
-        closePushModal();
-      } else {
-        throw new Error(data.error);
-      }
-    } catch (error) {
-      showToast("Gönderim başarısız", "error");
-    }
-  }
-
-  // Load on ready
-  document.addEventListener("DOMContentLoaded", loadUserData);
+document.addEventListener('DOMContentLoaded', loadUser);
 </script>
 {% endblock %}

@@ -1,68 +1,46 @@
-{% extends "admin/layout.html" %} {% block title %}ORBIS Admin - Push
-Bildirimleri{% endblock %} {% block page_title %}Push Bildirimleri{% endblock %}
-{% block page_subtitle %}Kullanıcılara bildirim gönder{% endblock %} {% block
-content %}
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-  <!-- Send Notification Form -->
-  <div class="glass-card rounded-2xl p-6">
-    <h3 class="font-display font-bold text-lg mb-6 flex items-center gap-2">
-      <span class="material-icons-round text-primary">send</span>
-      Bildirim Gönder
-    </h3>
+{% extends "admin/layout.html" %}
+{% block title %}ORBIS Admin · Push Bildirimleri{% endblock %}
+{% block page_title %}Push Bildirimleri{% endblock %}
+{% block page_subtitle %}Kullanıcılara bildirim gönder{% endblock %}
 
-    <form id="push-form" class="space-y-5">
+{% block content %}
+<div class="grid grid--2 stagger">
+  <!-- Send Form -->
+  <section class="card">
+    <header class="card-header">
+      <div>
+        <h2 class="card-title">Bildirim Gönder</h2>
+        <p class="card-subtitle">Hedef kitle, başlık ve mesaj seçin</p>
+      </div>
+      <span class="badge badge--dot badge--primary">Push</span>
+    </header>
+    <form id="push-form" class="stack-4" style="padding: var(--space-6);">
       <!-- Target Type -->
       <div>
-        <label
-          class="block text-xs text-ink-muted uppercase tracking-wider mb-2"
-          >Hedef</label
-        >
-        <div class="grid grid-cols-3 gap-2">
-          <label
-            class="target-option flex items-center justify-center gap-2 p-3 bg-surface-2 rounded-xl cursor-pointer border-2 border-transparent hover:border-primary/30 transition-all"
-          >
-            <input
-              type="radio"
-              name="targetType"
-              value="all"
-              class="hidden"
-              checked
-            />
-            <span class="material-icons-round text-lg">groups</span>
-            <span class="text-sm">Herkese</span>
+        <label style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink); margin-bottom: 8px; display: block;">Hedef</label>
+        <div class="grid grid--3" style="gap: var(--space-2);">
+          <label class="target-option">
+            <input type="radio" name="targetType" value="all" checked />
+            <span class="material-symbols-outlined" aria-hidden="true">groups</span>
+            <span>Herkese</span>
           </label>
-          <label
-            class="target-option flex items-center justify-center gap-2 p-3 bg-surface-2 rounded-xl cursor-pointer border-2 border-transparent hover:border-primary/30 transition-all"
-          >
-            <input
-              type="radio"
-              name="targetType"
-              value="topic"
-              class="hidden"
-            />
-            <span class="material-icons-round text-lg">label</span>
-            <span class="text-sm">Topic</span>
+          <label class="target-option">
+            <input type="radio" name="targetType" value="topic" />
+            <span class="material-symbols-outlined" aria-hidden="true">label</span>
+            <span>Topic</span>
           </label>
-          <label
-            class="target-option flex items-center justify-center gap-2 p-3 bg-surface-2 rounded-xl cursor-pointer border-2 border-transparent hover:border-primary/30 transition-all"
-          >
-            <input type="radio" name="targetType" value="user" class="hidden" />
-            <span class="material-icons-round text-lg">person</span>
-            <span class="text-sm">Kullanıcı</span>
+          <label class="target-option">
+            <input type="radio" name="targetType" value="user" />
+            <span class="material-symbols-outlined" aria-hidden="true">person</span>
+            <span>Kullanıcı</span>
           </label>
         </div>
       </div>
 
-      <!-- Topic Select (hidden by default) -->
-      <div id="topic-select" class="hidden">
-        <label
-          class="block text-xs text-ink-muted uppercase tracking-wider mb-2"
-          >Topic Seç</label
-        >
-        <select
-          id="topic"
-          class="w-full px-4 py-3 bg-surface-2 border border-border-dark rounded-xl text-sm focus:outline-none focus:border-primary/50"
-        >
+      <!-- Topic Select -->
+      <div id="topic-select" hidden>
+        <label for="topic" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink); margin-bottom: 8px; display: block;">Topic Seç</label>
+        <select id="topic" class="select" style="width: 100%;">
           <option value="all_users">Tüm Kullanıcılar</option>
           <option value="premium_users">Premium Kullanıcılar</option>
           <option value="daily_horoscope">Günlük Burç Aboneleri</option>
@@ -70,303 +48,236 @@ content %}
         </select>
       </div>
 
-      <!-- User ID Input (hidden by default) -->
-      <div id="user-select" class="hidden">
-        <label
-          class="block text-xs text-ink-muted uppercase tracking-wider mb-2"
-          >Kullanıcı ID</label
-        >
-        <input
-          type="text"
-          id="userId"
-          placeholder="Firebase User ID"
-          class="w-full px-4 py-3 bg-surface-2 border border-border-dark rounded-xl text-sm focus:outline-none focus:border-primary/50"
-        />
+      <!-- User ID -->
+      <div id="user-select" hidden>
+        <label for="userId" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink); margin-bottom: 8px; display: block;">Kullanıcı ID</label>
+        <input type="text" id="userId" class="input" placeholder="Firebase User ID" />
       </div>
 
       <!-- Title -->
       <div>
-        <label
-          class="block text-xs text-ink-muted uppercase tracking-wider mb-2"
-          >Başlık</label
-        >
-        <input
-          type="text"
-          id="title"
-          placeholder="Bildirim başlığı"
-          required
-          class="w-full px-4 py-3 bg-surface-2 border border-border-dark rounded-xl text-sm focus:outline-none focus:border-primary/50"
-        />
+        <label for="title" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink); margin-bottom: 8px; display: block;">Başlık</label>
+        <input type="text" id="title" class="input" placeholder="Bildirim başlığı" required />
       </div>
 
       <!-- Body -->
       <div>
-        <label
-          class="block text-xs text-ink-muted uppercase tracking-wider mb-2"
-          >Mesaj</label
-        >
-        <textarea
-          id="body"
-          rows="4"
-          placeholder="Bildirim içeriği"
-          required
-          class="w-full px-4 py-3 bg-surface-2 border border-border-dark rounded-xl text-sm focus:outline-none focus:border-primary/50 resize-none"
-        ></textarea>
+        <label for="body" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink); margin-bottom: 8px; display: block;">Mesaj</label>
+        <textarea id="body" rows="4" class="input" style="height: auto; resize: vertical;" placeholder="Bildirim içeriği" required></textarea>
       </div>
 
-      <!-- Submit -->
-      <button
-        type="submit"
-        class="w-full flex items-center justify-center gap-2 px-6 py-4 bg-primary hover:bg-primary/80 rounded-xl text-sm font-bold uppercase tracking-wider transition-colors"
-      >
-        <span class="material-icons-round">send</span>
+      <button type="submit" class="btn btn--primary" style="width: 100%; height: 44px;">
+        <span class="material-symbols-outlined" aria-hidden="true">send</span>
         Bildirimi Gönder
       </button>
     </form>
-  </div>
+  </section>
 
-  <!-- Quick Templates -->
-  <div class="space-y-6">
-    <!-- Templates -->
-    <div class="glass-card rounded-2xl p-6">
-      <h3 class="font-display font-bold text-lg mb-4 flex items-center gap-2">
-        <span class="material-icons-round text-primary">description</span>
-        Hazır Şablonlar
-      </h3>
-
-      <div class="space-y-3">
-        <button
-          onclick="useTemplate('daily')"
-          class="w-full flex items-center gap-3 p-4 bg-surface-2 hover:bg-surface-3 rounded-xl transition-colors text-left"
-        >
-          <span class="material-icons-round text-yellow-400">wb_sunny</span>
+  <!-- Side Panel -->
+  <div class="stack-4">
+    <!-- Quick Templates -->
+    <section class="card">
+      <header class="card-header">
+        <div>
+          <h2 class="card-title">Hazır Şablonlar</h2>
+          <p class="card-subtitle">Hızlı başlangıç için</p>
+        </div>
+        <span class="material-symbols-outlined" aria-hidden="true" style="color: var(--primary);">description</span>
+      </header>
+      <div class="stack-2" style="padding: var(--space-4);">
+        <button type="button" onclick="useTemplate('daily')" class="template-row">
+          <span class="metric-icon" style="background: oklch(0.95 0.050 90); color: oklch(0.50 0.180 80);">
+            <span class="material-symbols-outlined" aria-hidden="true">wb_sunny</span>
+          </span>
           <div>
-            <div class="font-medium text-sm">Günlük Burç Yorumu</div>
-            <div class="text-xs text-ink-muted">
-              Günlük burç yorumunuz hazır!
-            </div>
+            <div style="font-size: 13px; font-weight: 600; color: var(--ink);">Günlük Burç Yorumu</div>
+            <div style="font-size: 11px; color: var(--ink-muted);">Günlük burç yorumunuz hazır!</div>
           </div>
         </button>
 
-        <button
-          onclick="useTemplate('weekly')"
-          class="w-full flex items-center gap-3 p-4 bg-surface-2 hover:bg-surface-3 rounded-xl transition-colors text-left"
-        >
-          <span class="material-icons-round text-accent">date_range</span>
+        <button type="button" onclick="useTemplate('weekly')" class="template-row">
+          <span class="metric-icon" style="background: oklch(0.92 0.040 290); color: oklch(0.45 0.180 290);">
+            <span class="material-symbols-outlined" aria-hidden="true">date_range</span>
+          </span>
           <div>
-            <div class="font-medium text-sm">Haftalık Analiz</div>
-            <div class="text-xs text-ink-muted">
-              Bu haftanın kozmik enerjileri...
-            </div>
+            <div style="font-size: 13px; font-weight: 600; color: var(--ink);">Haftalık Analiz</div>
+            <div style="font-size: 11px; color: var(--ink-muted);">Bu haftanın kozmik enerjileri…</div>
           </div>
         </button>
 
-        <button
-          onclick="useTemplate('promo')"
-          class="w-full flex items-center gap-3 p-4 bg-surface-2 hover:bg-surface-3 rounded-xl transition-colors text-left"
-        >
-          <span class="material-icons-round text-green-400">local_offer</span>
+        <button type="button" onclick="useTemplate('promo')" class="template-row">
+          <span class="metric-icon" style="background: oklch(0.95 0.030 145); color: oklch(0.50 0.150 145);">
+            <span class="material-symbols-outlined" aria-hidden="true">local_offer</span>
+          </span>
           <div>
-            <div class="font-medium text-sm">Premium Kampanya</div>
-            <div class="text-xs text-ink-muted">Özel indirim fırsatı!</div>
+            <div style="font-size: 13px; font-weight: 600; color: var(--ink);">Premium Kampanya</div>
+            <div style="font-size: 11px; color: var(--ink-muted);">Özel indirim fırsatı!</div>
           </div>
         </button>
 
-        <button
-          onclick="useTemplate('update')"
-          class="w-full flex items-center gap-3 p-4 bg-surface-2 hover:bg-surface-3 rounded-xl transition-colors text-left"
-        >
-          <span class="material-icons-round text-purple-400"
-            >system_update</span
-          >
+        <button type="button" onclick="useTemplate('update')" class="template-row">
+          <span class="metric-icon" style="background: oklch(0.92 0.040 270); color: oklch(0.45 0.180 270);">
+            <span class="material-symbols-outlined" aria-hidden="true">system_update</span>
+          </span>
           <div>
-            <div class="font-medium text-sm">Güncelleme Duyurusu</div>
-            <div class="text-xs text-ink-muted">Yeni özellikler eklendi!</div>
+            <div style="font-size: 13px; font-weight: 600; color: var(--ink);">Güncelleme Duyurusu</div>
+            <div style="font-size: 11px; color: var(--ink-muted);">Yeni özellikler eklendi!</div>
           </div>
         </button>
       </div>
-    </div>
+    </section>
 
     <!-- Preview -->
-    <div class="glass-card rounded-2xl p-6">
-      <h3 class="font-display font-bold text-lg mb-4 flex items-center gap-2">
-        <span class="material-icons-round text-primary">preview</span>
-        Önizleme
-      </h3>
-
-      <div class="bg-surface-2 rounded-2xl p-4 border border">
-        <!-- Mock notification -->
-        <div class="flex items-start gap-3">
-          <div
-            class="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0"
-          >
-            <span class="material-icons-round text-primary">all_inclusive</span>
+    <section class="card">
+      <header class="card-header">
+        <div>
+          <h2 class="card-title">Önizleme</h2>
+          <p class="card-subtitle">Telefonda nasıl görünecek</p>
+        </div>
+        <span class="material-symbols-outlined" aria-hidden="true" style="color: var(--primary);">preview</span>
+      </header>
+      <div style="padding: var(--space-6);">
+        <div class="notification-preview">
+          <div class="metric-icon">
+            <span class="material-symbols-outlined" aria-hidden="true">all_inclusive</span>
           </div>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center justify-between">
-              <span class="font-medium text-sm" id="preview-title">ORBIS</span>
-              <span class="text-[10px] text-ink-muted">şimdi</span>
+          <div style="flex: 1; min-width: 0;">
+            <div class="row row--between">
+              <span style="font-size: 13px; font-weight: 600; color: var(--ink);" id="preview-title">ORBIS</span>
+              <span style="font-size: 10px; color: var(--ink-faint);">şimdi</span>
             </div>
-            <p
-              id="preview-body"
-              class="text-xs text-ink-muted mt-1 line-clamp-2"
-            >
-              Bildirim önizlemesi burada görünecek...
+            <p id="preview-body" style="font-size: 12px; color: var(--ink-muted); margin: 4px 0 0; line-height: 1.4;">
+              Bildirim önizlemesi burada görünecek…
             </p>
           </div>
         </div>
+        <p style="font-size: 10px; color: var(--ink-faint); margin: 12px 0 0; text-align: center;">
+          Gerçek bildirim görünümü cihaza göre değişebilir
+        </p>
       </div>
+    </section>
 
-      <p class="text-[10px] text-ink-faint mt-3 text-center">
-        Gerçek bildirim görünümü cihaza göre değişebilir
-      </p>
-    </div>
-
-    <!-- Stats -->
-    <div class="glass-card rounded-2xl p-6">
-      <h3 class="font-display font-bold text-lg mb-4 flex items-center gap-2">
-        <span class="material-icons-round text-primary">analytics</span>
-        Topic İstatistikleri
-      </h3>
-
-      <div class="space-y-3">
-        <div
-          class="flex items-center justify-between p-3 bg-surface-2 rounded-xl"
-        >
-          <span class="text-sm">all_users</span>
-          <span class="text-xs text-ink-muted">Tüm kayıtlı cihazlar</span>
+    <!-- Topics -->
+    <section class="card">
+      <header class="card-header">
+        <div>
+          <h2 class="card-title">Topic İstatistikleri</h2>
+          <p class="card-subtitle">FCM topic abone sayıları</p>
         </div>
-        <div
-          class="flex items-center justify-between p-3 bg-surface-2 rounded-xl"
-        >
-          <span class="text-sm">premium_users</span>
-          <span class="text-xs text-ink-muted">Premium üyeler</span>
+        <span class="material-symbols-outlined" aria-hidden="true" style="color: var(--primary);">analytics</span>
+      </header>
+      <div class="stack-2" style="padding: var(--space-4);">
+        <div class="topic-row">
+          <span style="font-family: var(--font-mono); font-size: 12px; color: var(--ink);">all_users</span>
+          <span style="font-size: 11px; color: var(--ink-muted);">Tüm kayıtlı cihazlar</span>
         </div>
-        <div
-          class="flex items-center justify-between p-3 bg-surface-2 rounded-xl"
-        >
-          <span class="text-sm">daily_horoscope</span>
-          <span class="text-xs text-ink-muted">Günlük aboneler</span>
+        <div class="topic-row">
+          <span style="font-family: var(--font-mono); font-size: 12px; color: var(--ink);">premium_users</span>
+          <span style="font-size: 11px; color: var(--ink-muted);">Premium üyeler</span>
+        </div>
+        <div class="topic-row">
+          <span style="font-family: var(--font-mono); font-size: 12px; color: var(--ink);">daily_horoscope</span>
+          <span style="font-size: 11px; color: var(--ink-muted);">Günlük aboneler</span>
+        </div>
+        <div class="topic-row">
+          <span style="font-family: var(--font-mono); font-size: 12px; color: var(--ink);">weekly_horoscope</span>
+          <span style="font-size: 11px; color: var(--ink-muted);">Haftalık aboneler</span>
         </div>
       </div>
-    </div>
+    </section>
   </div>
 </div>
-{% endblock %} {% block scripts %}
+{% endblock %}
+
+{% block scripts %}
 <script>
-  // Target type selection
-  document.querySelectorAll('input[name="targetType"]').forEach((radio) => {
-    radio.addEventListener("change", (e) => {
-      // Update styles
-      document.querySelectorAll(".target-option").forEach((opt) => {
-        opt.classList.remove("border-primary", "bg-primary/10");
-        opt.classList.add("border-transparent");
-      });
-      e.target
-        .closest(".target-option")
-        .classList.add("border-primary", "bg-primary/10");
-      e.target.closest(".target-option").classList.remove("border-transparent");
+const TEMPLATES = {
+  daily: {
+    title: '🌟 Günlük Burç Yorumunuz Hazır!',
+    body: 'Bugün yıldızlar sizin için ne söylüyor? Günlük kozmik rehberinizi keşfedin.',
+  },
+  weekly: {
+    title: '📅 Haftalık Kozmik Analiz',
+    body: 'Bu haftanın astrolojik enerjileri ve size özel tavsiyeleri görüntüleyin.',
+  },
+  promo: {
+    title: '💎 Premium\'da %50 İndirim!',
+    body: 'Sınırlı süre! Premium üyelikte büyük fırsat. Hemen keşfedin.',
+  },
+  update: {
+    title: '🚀 ORBIS Güncellendi!',
+    body: 'Yeni özellikler ve iyileştirmeler sizi bekliyor. Uygulamayı açın ve keşfedin.',
+  },
+};
 
-      // Show/hide fields
-      const value = e.target.value;
-      document
-        .getElementById("topic-select")
-        .classList.toggle("hidden", value !== "topic");
-      document
-        .getElementById("user-select")
-        .classList.toggle("hidden", value !== "user");
+document.querySelectorAll('input[name="targetType"]').forEach((radio) => {
+  radio.addEventListener('change', (e) => {
+    document.querySelectorAll('.target-option').forEach(opt => opt.classList.remove('is-active'));
+    e.target.closest('.target-option').classList.add('is-active');
+    document.getElementById('topic-select').hidden = e.target.value !== 'topic';
+    document.getElementById('user-select').hidden = e.target.value !== 'user';
+  });
+});
+
+// Default selection
+document.querySelector('.target-option').classList.add('is-active');
+
+document.getElementById('title').addEventListener('input', updatePreview);
+document.getElementById('body').addEventListener('input', updatePreview);
+
+function updatePreview() {
+  document.getElementById('preview-title').textContent = document.getElementById('title').value || 'ORBIS';
+  document.getElementById('preview-body').textContent = document.getElementById('body').value || 'Bildirim önizlemesi burada görünecek…';
+}
+
+function useTemplate(key) {
+  const t = TEMPLATES[key];
+  if (!t) return;
+  document.getElementById('title').value = t.title;
+  document.getElementById('body').value = t.body;
+  updatePreview();
+}
+
+document.getElementById('push-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const targetType = document.querySelector('input[name="targetType"]:checked').value;
+  const title = document.getElementById('title').value;
+  const body = document.getElementById('body').value;
+
+  let target = null;
+  if (targetType === 'topic') target = document.getElementById('topic').value;
+  else if (targetType === 'user') {
+    target = document.getElementById('userId').value;
+    if (!target) { showToast('Kullanıcı ID gerekli', 'error'); return; }
+  }
+
+  const btn = e.target.querySelector('button[type="submit"]');
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined spin" aria-hidden="true">progress_activity</span> Gönderiliyor…';
+
+  try {
+    const res = await fetch('/admin/api/push/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetType, target, title, body }),
     });
-  });
-
-  // Initialize first option as selected
-  document
-    .querySelector(".target-option")
-    .classList.add("border-primary", "bg-primary/10");
-
-  // Live preview
-  document.getElementById("title").addEventListener("input", updatePreview);
-  document.getElementById("body").addEventListener("input", updatePreview);
-
-  function updatePreview() {
-    const title = document.getElementById("title").value || "ORBIS";
-    const body =
-      document.getElementById("body").value ||
-      "Bildirim önizlemesi burada görünecek...";
-
-    document.getElementById("preview-title").textContent = title;
-    document.getElementById("preview-body").textContent = body;
-  }
-
-  // Templates
-  const templates = {
-    daily: {
-      title: "🌟 Günlük Burç Yorumunuz Hazır!",
-      body: "Bugün yıldızlar sizin için ne söylüyor? Günlük kozmik rehberinizi keşfedin.",
-    },
-    weekly: {
-      title: "📅 Haftalık Kozmik Analiz",
-      body: "Bu haftanın astrolojik enerjileri ve size özel tavsiyeleri görüntüleyin.",
-    },
-    promo: {
-      title: "💎 Premium'da %50 İndirim!",
-      body: "Sınırlı süre! Premium üyelikte büyük fırsat. Hemen keşfedin.",
-    },
-    update: {
-      title: "🚀 ORBIS Güncellendi!",
-      body: "Yeni özellikler ve iyileştirmeler sizi bekliyor. Uygulamayı açın ve keşfedin.",
-    },
-  };
-
-  function useTemplate(key) {
-    const template = templates[key];
-    document.getElementById("title").value = template.title;
-    document.getElementById("body").value = template.body;
-    updatePreview();
-  }
-
-  // Form submit
-  document.getElementById("push-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const targetType = document.querySelector(
-      'input[name="targetType"]:checked'
-    ).value;
-    const title = document.getElementById("title").value;
-    const body = document.getElementById("body").value;
-
-    let target = null;
-    if (targetType === "topic") {
-      target = document.getElementById("topic").value;
-    } else if (targetType === "user") {
-      target = document.getElementById("userId").value;
-      if (!target) {
-        showToast("Kullanıcı ID gerekli", "error");
-        return;
-      }
+    const data = await res.json();
+    if (data.success) {
+      showToast('Bildirim başarıyla gönderildi!', 'success');
+      document.getElementById('title').value = '';
+      document.getElementById('body').value = '';
+      updatePreview();
+    } else {
+      throw new Error(data.error || 'Gönderim başarısız');
     }
-
-    try {
-      const res = await fetch("/admin/api/push/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targetType, target, title, body }),
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        showToast("Bildirim başarıyla gönderildi!", "success");
-        // Reset form
-        document.getElementById("title").value = "";
-        document.getElementById("body").value = "";
-        updatePreview();
-      } else {
-        throw new Error(data.error || "Gönderim başarısız");
-      }
-    } catch (error) {
-      console.error("Push error:", error);
-      showToast(error.message, "error");
-    }
-  });
+  } catch (error) {
+    console.error('Push error:', error);
+    showToast(error.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
+});
 </script>
 {% endblock %}

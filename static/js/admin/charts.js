@@ -168,7 +168,9 @@
   // ─── Public API ──────────────────────────────────────
   window.OrbisCharts = {
     sparkline: sparkline,
+    line: lineChart,        // alias
     lineChart: lineChart,
+    bar: barChart,          // alias
     barChart: barChart
   };
 

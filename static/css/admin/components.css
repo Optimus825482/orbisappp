@@ -619,3 +619,314 @@ label {
 .progress-bar--primary { background: var(--primary); }
 .progress-bar--success { background: oklch(0.65 0.180 145); }
 .progress-bar--warning { background: oklch(0.78 0.150 80); }
+
+/* ─── Alert (info/success/error) ─────────────────────── */
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md, 12px);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.alert .material-symbols-outlined { flex-shrink: 0; font-size: 20px; }
+.alert--info {
+  background: var(--primary-soft);
+  color: var(--ink);
+  border: 1px solid var(--primary);
+}
+[data-theme="dark"] .alert--info { background: oklch(0.30 0.080 270 / 0.40); }
+.alert--success {
+  background: oklch(0.95 0.030 145);
+  color: oklch(0.30 0.150 145);
+  border: 1px solid oklch(0.75 0.150 145);
+}
+.alert--error {
+  background: oklch(0.96 0.030 25);
+  color: oklch(0.40 0.180 25);
+  border: 1px solid oklch(0.75 0.150 25);
+}
+
+/* ─── Select (native) ─────────────────────────────────── */
+.select {
+  height: 38px;
+  padding: 0 12px;
+  background: var(--surface-2);
+  color: var(--ink);
+  border: 1px solid var(--surface-3);
+  border-radius: var(--radius-sm, 8px);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.select:hover { border-color: var(--ink-faint); }
+.select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+
+/* ─── Code block ─────────────────────────────────────── */
+.code-block {
+  background: var(--surface-2);
+  color: var(--ink);
+  border: 1px solid var(--surface-3);
+  border-radius: var(--radius-sm, 8px);
+  padding: 12px 14px;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ─── Modal ──────────────────────────────────────────── */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal[hidden] { display: none; }
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.modal-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border-strong, var(--surface-3));
+  border-radius: 16px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 64px -8px rgb(0 0 0 / 0.30);
+}
+
+/* ─── Empty state ────────────────────────────────────── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+.empty-state .material-symbols-outlined { font-size: 32px; opacity: 0.4; }
+
+/* ─── Provider row (AI Settings) ───────────────────── */
+.provider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--surface-3);
+  border-radius: var(--radius-md, 12px);
+  transition: border-color 150ms ease, background 150ms ease;
+}
+.provider-row:hover {
+  border-color: var(--primary);
+  background: var(--surface);
+}
+
+/* ─── Icon button variants ─────────────────────────── */
+.icon-btn--success { color: oklch(0.50 0.150 145); }
+.icon-btn--info { color: oklch(0.55 0.140 230); }
+.icon-btn--primary { color: var(--primary); }
+.icon-btn--danger { color: oklch(0.50 0.180 25); }
+.icon-btn--success:hover { background: oklch(0.95 0.030 145); }
+.icon-btn--info:hover { background: oklch(0.95 0.030 230); }
+.icon-btn--primary:hover { background: var(--primary-soft); }
+.icon-btn--danger:hover { background: oklch(0.96 0.030 25); }
+
+/* ─── Button ghost ───────────────────────────────────── */
+.btn--ghost {
+  background: var(--surface-2);
+  color: var(--ink);
+  border: 1px solid var(--surface-3);
+  padding: 0 16px;
+  height: 38px;
+  font-weight: 500;
+}
+.btn--ghost:hover { background: var(--surface-3); }
+
+/* ─── Spin (loading icon) ───────────────────────────── */
+.material-symbols-outlined.spin {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── Push notification form ─────────────────────────── */
+.target-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 8px;
+  background: var(--surface-2);
+  border: 2px solid var(--surface-3);
+  border-radius: var(--radius-md, 12px);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  transition: all 150ms ease;
+  user-select: none;
+}
+.target-option input { position: absolute; opacity: 0; pointer-events: none; }
+.target-option .material-symbols-outlined { font-size: 18px; }
+.target-option:hover {
+  border-color: var(--primary);
+  color: var(--ink);
+}
+.target-option.is-active {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+/* ─── Template rows (Push) ─────────────────────────── */
+.template-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--surface-3);
+  border-radius: var(--radius-md, 12px);
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  font-family: inherit;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+.template-row:hover {
+  background: var(--surface);
+  border-color: var(--primary);
+}
+
+/* ─── Notification preview (Push) ───────────────────── */
+.notification-preview {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--surface-3);
+  border-radius: var(--radius-md, 12px);
+}
+
+/* ─── Topic row (Push) ─────────────────────────────── */
+.topic-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm, 8px);
+}
+
+/* ─── Pricing row (Pricing) ─────────────────────────── */
+.pricing-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--surface-3);
+  border-radius: var(--radius-md, 12px);
+  transition: border-color 150ms ease;
+}
+.pricing-row:hover { border-color: var(--primary); }
+.pricing-row--highlight {
+  background: linear-gradient(135deg,
+    oklch(0.96 0.030 80 / 0.30),
+    oklch(0.96 0.030 50 / 0.30));
+  border-color: oklch(0.85 0.080 80);
+}
+.pricing-summary {
+  padding: 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--surface-3);
+  border-radius: var(--radius-md, 12px);
+}
+
+/* ─── Icon button square ───────────────────────────── */
+.icon-btn-square {
+  width: 44px;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+/* ─── Info row (User detail) ───────────────────────── */
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.info-row:last-child { border-bottom: 0; }
+.info-label {
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+.info-value {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* ─── Action button (User detail) ───────────────────── */
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md, 12px);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 150ms ease, transform 80ms ease;
+  width: 100%;
+}
+.action-btn:hover { filter: brightness(1.05); }
+.action-btn:active { transform: scale(0.98); }
+.action-btn--warning { background: oklch(0.95 0.030 80); color: oklch(0.45 0.150 80); border-color: oklch(0.85 0.080 80); }
+.action-btn--primary { background: var(--primary-soft); color: var(--primary); border-color: var(--primary); }
+.action-btn--accent { background: oklch(0.92 0.040 200); color: oklch(0.45 0.150 200); border-color: oklch(0.85 0.080 200); }
+
+/* ─── List row (User detail) ───────────────────────── */
+.list-row {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.list-row:last-child { border-bottom: 0; }
+
+/* ─── Button danger ─────────────────────────────────── */
+.btn--danger {
+  background: oklch(0.96 0.030 25);
+  color: oklch(0.40 0.180 25);
+  border: 1px solid oklch(0.85 0.150 25);
+  padding: 0 16px;
+  height: 38px;
+  font-weight: 500;
+}
+.btn--danger:hover { background: oklch(0.93 0.060 25); }
+
+/* ─── Modal wider ───────────────────────────────────── */
+.modal-card { max-width: 520px; }
