@@ -596,3 +596,21 @@ label {
 .border-white/5 { border-color: var(--border); }
 .border-white/10 { border-color: var(--border-strong); }
 .placeholder\:text-ink-faint::placeholder { color: var(--ink-faint); }
+
+/* ─── Progress bar ────────────────────────────────────── */
+.progress {
+  width: 100%;
+  background: var(--surface-2);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+.progress-bar {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 600ms var(--ease-out-quint, cubic-bezier(0.22, 1, 0.36, 1));
+  background: var(--ink-muted);
+}
+.progress-bar--primary { background: var(--primary); }
+.progress-bar--success { background: oklch(0.65 0.180 145); }
+.progress-bar--warning { background: oklch(0.78 0.150 80); }

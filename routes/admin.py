@@ -220,8 +220,164 @@ def get_stats_overview():
             'lastLoginEmail': stats.get('last_login_email', ''),
             'lastLoginName': stats.get('last_login_name', ''),
             'lastLoginTime': stats.get('last_login_time', ''),
+            # GA4 series (None ise client default gösterir)
+            **_attach_ga_data(request.args.get('range', '7d')),
+            # AdMob (None ise client default gösterir)
+            **_attach_admob_data(request.args.get('range', '7d')),
+            # Activity feed (Firestore son olaylar)
+            **_attach_activity(),
         }
     })
+
+
+def _attach_ga_data(date_range: str) -> dict:
+    """GA4 Data API'den series çek. Service yoksa boş döner (client default)."""
+    try:
+        from services.google_analytics import get_overview
+        data = get_overview(date_range)
+        if not data:
+            return {}
+        return {
+            'signupsSeries': data.get('usersSeries', []),
+            'activeSeries': data.get('sessionsSeries', []),
+            'gaConversions': data.get('totalConversions', 0),
+            'gaPageViews': data.get('totalPageViews', 0),
+        }
+    except Exception:
+        return {}
+
+
+def _attach_admob_data(date_range: str) -> dict:
+    """AdMob API'den revenue/impressions. Service yoksa boş döner."""
+    try:
+        from services.admob import get_overview
+        data = get_overview(date_range)
+        if not data:
+            return {}
+        rows = data.get('rows', [])
+        return {
+            'admob': {
+                'revenue_today': data.get('revenue_usd', 0),
+                'impressions_today': data.get('impressions', 0),
+                'ecpm_today': data.get('ecpm_usd', 0),
+            },
+            'admobSparkline': [r.get('estimatedEarningsMicros', 0) / 1e6
+                              for r in rows[-8:]] or None,
+        }
+    except Exception:
+        return {}
+
+
+def _attach_activity() -> dict:
+    """Firestore son 10 olay (signup, premium, push, error)."""
+    try:
+        if not firebase_service.db:
+            return {}
+        from google.cloud.firestore import Query
+        from datetime import datetime, timezone
+        docs = firebase_service.db.collection('purchases') \
+            .order_by('timestamp', direction=Query.DESCENDING) \
+            .limit(10).stream()
+        items = []
+        for d in docs:
+            data = d.to_dict() or {}
+            t = data.get('timestamp')
+            rel = ''
+            if t:
+                try:
+                    dt = t if isinstance(t, datetime) else datetime.fromisoformat(str(t))
+                    if dt.tzinfo is None:
+                        dt = dt.replace(tzinfo=timezone.utc)
+                    delta = datetime.now(timezone.utc) - dt
+                    if delta.days > 0:
+                        rel = f'{delta.days}g önce'
+                    elif delta.seconds > 3600:
+                        rel = f'{delta.seconds // 3600}s önce'
+                    elif delta.seconds > 60:
+                        rel = f'{delta.seconds // 60}dk önce'
+                    else:
+                        rel = 'az önce'
+                except Exception:
+                    rel = ''
+            items.append({
+                'type': 'premium' if data.get('type') == 'premium' else 'info',
+                'title': f"Premium aktivasyonu · {data.get('packageId', 'bilinmiyor')}",
+                'meta': f"uid: {data.get('userId', '?')[:12]}…",
+                'relative': rel,
+                'at': str(t) if t else None,
+            })
+        return {'activity': items} if items else {}
+    except Exception:
+        return {}
+
+
+# ─── GA4 + AdMob standalone endpoints (deep link için) ─────
+@admin_bp.route('/api/analytics/overview', methods=['GET'])
+@admin_required
+@handle_errors("Analytics alınamadı")
+def get_analytics_overview():
+    """GA4 özet verileri (kendi route'u, dashboard bağımsız)."""
+    from services.google_analytics import get_overview as ga_overview
+    date_range = request.args.get('range', '7d')
+    data = ga_overview(date_range)
+    if data is None:
+        return jsonify({
+            'success': False,
+            'error': 'GA4_NOT_CONFIGURED',
+            'message': 'GA4 service account / property ID eksik.',
+        }), 503
+    return jsonify({'success': True, 'data': data})
+
+
+@admin_bp.route('/api/analytics/top-pages', methods=['GET'])
+@admin_required
+@handle_errors("Top pages alınamadı")
+def get_analytics_top_pages():
+    from services.google_analytics import get_top_pages
+    date_range = request.args.get('range', '7d')
+    data = get_top_pages(date_range)
+    if data is None:
+        return jsonify({'success': False, 'error': 'GA4_NOT_CONFIGURED'}), 503
+    return jsonify({'success': True, 'data': data})
+
+
+@admin_bp.route('/api/analytics/traffic', methods=['GET'])
+@admin_required
+@handle_errors("Traffic alınamadı")
+def get_analytics_traffic():
+    from services.google_analytics import get_traffic_sources
+    date_range = request.args.get('range', '7d')
+    data = get_traffic_sources(date_range)
+    if data is None:
+        return jsonify({'success': False, 'error': 'GA4_NOT_CONFIGURED'}), 503
+    return jsonify({'success': True, 'data': data})
+
+
+@admin_bp.route('/api/admob/overview', methods=['GET'])
+@admin_required
+@handle_errors("AdMob alınamadı")
+def get_admob_overview():
+    from services.admob import get_overview as admob_overview
+    date_range = request.args.get('range', '30d')
+    data = admob_overview(date_range)
+    if data is None:
+        return jsonify({
+            'success': False,
+            'error': 'ADMOB_NOT_CONFIGURED',
+            'message': 'AdMob OAuth credentials eksik.',
+        }), 503
+    return jsonify({'success': True, 'data': data})
+
+
+@admin_bp.route('/api/admob/apps', methods=['GET'])
+@admin_required
+@handle_errors("AdMob apps alınamadı")
+def get_admob_apps():
+    from services.admob import get_apps
+    data = get_apps()
+    if data is None:
+        return jsonify({'success': False, 'error': 'ADMOB_NOT_CONFIGURED'}), 503
+    return jsonify({'success': True, 'data': data})
 
 
 @admin_bp.route('/api/users', methods=['GET'])
