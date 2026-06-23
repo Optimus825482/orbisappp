@@ -407,9 +407,9 @@ def get_users():
 
     # Filter uygula
     if filter_type == 'premium':
-        users_ref = users_ref.where(filter=('isPremium', '==', True))
+        users_ref = users_ref.where('isPremium', '==', True)
     elif filter_type == 'free':
-        users_ref = users_ref.where(filter=('isPremium', '==', False))
+        users_ref = users_ref.where('isPremium', '==', False)
 
     # Search varsa tumunu oku (Firestore text search desteklemez)
     if search:
@@ -487,7 +487,7 @@ def get_user_detail(user_id):
     # Satın alma geçmişi
     purchases = list(
         db.collection('purchases')
-        .where(filter=('userId', '==', user_id))
+        .where('userId', '==', user_id)
         .order_by('timestamp', direction='DESCENDING')
         .limit(20)
         .stream()
@@ -721,7 +721,7 @@ def get_purchase_stats():
     
     purchases = list(
         db.collection('purchases')
-        .where(filter=('timestamp', '>=', thirty_days_ago))
+        .where('timestamp', '>=', thirty_days_ago)
         .stream()
     )
     

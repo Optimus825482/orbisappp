@@ -12,7 +12,7 @@ db = firestore.client()
 
 # Mevcut kullanicilardan sayilari hesapla
 total = db.collection('users').count().get()[0][0].value
-premium = db.collection('users').where(filter=('isPremium', '==', True)).count().get()[0][0].value
+premium = db.collection('users').where('isPremium', '==', True).count().get()[0][0].value
 
 all_users = list(db.collection('users').stream())
 total_credits = sum(u.to_dict().get('credits', 0) for u in all_users)

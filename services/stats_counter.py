@@ -156,7 +156,7 @@ class StatsCounter:
             from datetime import datetime, timedelta, timezone
             cutoff = (datetime.now(timezone.utc) - timedelta(minutes=within_minutes)).isoformat()
             docs = list(self.db.collection("stats_heartbeats")
-                        .where(filter=("last_seen", ">=", cutoff))
+                        .where("last_seen", ">=", cutoff)
                         .stream())
             users = []
             for d in docs:
