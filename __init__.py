@@ -93,12 +93,16 @@ def create_app(test_config=None):
         strict_transport_security=os.getenv("FLASK_ENV") == "production",
         session_cookie_secure=os.getenv("FLASK_ENV") == "production",
         content_security_policy=None,  # CSP devre dışı - mobil app uyumluluğu için
-        # COOP same-origin popup pencerelerini blokluyor (Firebase Google signInWithPopup bozuluyor)
-        # "same-origin-allow-popups" COEP olmadan popuplara izin verir, default'tan daha güvenli
-        cross_origin_opener_policy="same-origin-allow-popups",
-        # COEP unsafe-none — Firebase SDK, gstatic CDN'lerle uyumlu
-        cross_origin_embedder_policy="unsafe-none",
     )
+
+    # COOP/COEP — Flask-Talisman 1.1.0 bu parametreleri desteklemiyor, manuel ekleme
+    # Firebase Google signInWithPopup için COOP same-origin popup blokluyor
+    # "same-origin-allow-popups" popup pencerelerine izin verir
+    @app.after_request
+    def set_cross_origin_headers(response):
+        response.headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups"
+        response.headers["Cross-Origin-Embedder-Policy"] = "unsafe-none"
+        return response
     
     # CSRF protection için secret key kontrolü
     if not app.config.get("SECRET_KEY"):
