@@ -153,17 +153,40 @@
   }
 
   // ─── Re-render on theme change ───────────────────────
+  // ÖNEMLİ: themechange listener sadece data-chart-original attribute'u olan
+  // elemanları render eder. Sayfa JS'i sonradan data-chart'i override etmişse,
+  // o elemanı tekrar çizme (live API call'ı içeriğini ezerdik).
   document.addEventListener('orbis:themechange', function () {
-    var els = document.querySelectorAll('[data-chart]');
+    var els = document.querySelectorAll('[data-chart-original]');
     els.forEach(function (el) {
       try {
-        var data = JSON.parse(el.getAttribute('data-chart'));
+        var data = JSON.parse(el.getAttribute('data-chart-original'));
         if (data.type === 'sparkline') sparkline(el, data.values, data.opts);
         else if (data.type === 'line') lineChart(el, data.series, data.opts);
         else if (data.type === 'bar') barChart(el, data.bars, data.opts);
       } catch (e) {}
     });
   });
+
+  // ─── Initial render: data-chart attribute'u olan tüm elemanları çiz ─
+  // (data-chart-original'a kopyala ki themechange ezmesin)
+  function initialRender() {
+    var els = document.querySelectorAll('[data-chart]');
+    els.forEach(function (el) {
+      try {
+        var data = JSON.parse(el.getAttribute('data-chart'));
+        el.setAttribute('data-chart-original', el.getAttribute('data-chart'));
+        if (data.type === 'sparkline') sparkline(el, data.values, data.opts);
+        else if (data.type === 'line') lineChart(el, data.series, data.opts);
+        else if (data.type === 'bar') barChart(el, data.bars, data.opts);
+      } catch (e) {}
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialRender);
+  } else {
+    initialRender();
+  }
 
   // ─── Public API ──────────────────────────────────────
   window.OrbisCharts = {

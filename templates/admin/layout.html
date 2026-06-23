@@ -43,49 +43,10 @@
       rel="stylesheet"
     />
 
-    <!-- Tailwind (eski admin sayfalarının `bg-slate-900` / `text-slate-100` / `bg-card-dark` vb. utility class'ları için; yeni design tokens'a bağlı) -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            colors: {
-              // Yeni design tokens (OKLCH) — dark/light tema otomatik
-              bg: 'var(--bg)',
-              surface: 'var(--surface)',
-              'surface-2': 'var(--surface-2)',
-              'surface-3': 'var(--surface-3)',
-              ink: 'var(--ink)',
-              'ink-muted': 'var(--ink-muted)',
-              'ink-faint': 'var(--ink-faint)',
-              primary: 'var(--primary)',
-              accent: 'var(--accent)',
-              success: 'var(--success)',
-              warning: 'var(--warning)',
-              danger: 'var(--danger)',
-              border: 'var(--border)',
-              'border-strong': 'var(--border-strong)',
-              // Eski admin sayfalarıyla uyumluluk (geriye dönük alias)
-              'card-dark': 'var(--surface)',
-              'surface-dark': 'var(--surface-2)',
-              'background-dark': 'var(--bg)',
-              'border-dark': 'var(--border)',
-            },
-            fontFamily: {
-              sans: ['Inter', 'system-ui', 'sans-serif'],
-              display: ['Space Grotesk', 'Inter', 'sans-serif'],
-              mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
-            },
-          },
-        },
-      };
-    </script>
-
-    <!-- Admin CSS (tokens → base → layout → components → motion) -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/tokens.css') }}?v=20260623-3" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/base.css') }}?v=20260623-3" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/layout.css') }}?v=20260623-3" />
+    <!-- Admin CSS (tokens → base → layout → components → motion) — Tailwind CDN kaldırıldı -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/tokens.css') }}?v=20260623-4" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/base.css') }}?v=20260623-4" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/layout.css') }}?v=20260623-4" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/components.css') }}?v=20260623-3" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/motion.css') }}?v=20260623-3" />
 
@@ -227,10 +188,10 @@
     <!-- Toast container -->
     <div id="toast-container" class="toast-container" role="region" aria-label="Bildirimler"></div>
 
-    <!-- Admin JS -->
-    <script src="{{ url_for('static', filename='js/admin/theme.js') }}?v=20260623-3" defer></script>
-    <script src="{{ url_for('static', filename='js/admin/shortcuts.js') }}?v=20260623-3" defer></script>
-    <script src="{{ url_for('static', filename='js/admin/charts.js') }}?v=20260623-3" defer></script>
+    <!-- Admin JS (Tailwind preflight kaldırıldı) -->
+    <script src="{{ url_for('static', filename='js/admin/theme.js') }}?v=20260623-4" defer></script>
+    <script src="{{ url_for('static', filename='js/admin/shortcuts.js') }}?v=20260623-4" defer></script>
+    <script src="{{ url_for('static', filename='js/admin/charts.js') }}?v=20260623-4" defer></script>
 
     <script>
       // Clock (cheap, render-side)
