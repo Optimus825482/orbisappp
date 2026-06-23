@@ -24,9 +24,6 @@ RUN pip install --no-cache-dir gunicorn
 # Application code
 COPY . .
 
-# Ephemeris dosyalarının doğru yerde olduğundan emin ol
-RUN mkdir -p /app/ephe
-
 # Environment variables
 ENV FLASK_APP=wsgi.py
 ENV FLASK_ENV=production

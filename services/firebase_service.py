@@ -41,7 +41,7 @@ class FirebaseService:
             # Credential dosyası yolu
             cred_path = os.environ.get('FIREBASE_CREDENTIALS_PATH')
             
-            if cred_path and os.path.exists(cred_path):
+            if cred_path and os.path.isfile(cred_path):
                 # Dosyadan yükle
                 cred = credentials.Certificate(cred_path)
             elif os.environ.get('FIREBASE_CREDENTIALS_JSON'):
@@ -58,7 +58,7 @@ class FirebaseService:
                 
                 cred = None
                 for path in default_paths:
-                    if os.path.exists(path):
+                    if os.path.isfile(path):
                         cred = credentials.Certificate(path)
                         break
                 

@@ -14,7 +14,6 @@ from decimal import Decimal, ROUND_DOWN
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple, Union, TypedDict, BinaryIO
 
-import requests
 import swisseph as swe
 from flask import jsonify, Blueprint, render_template, current_app
 from exceptions import (
@@ -146,55 +145,19 @@ logger = logging.getLogger(__name__)
 
 import requests  # Uzak dosyaları indirmek için
 
-# Swiss Ephemeris ayarları
-REMOTE_EPHE_BASE_URL = "https://erkanerdem.net/ephe/"
+# Swiss Ephemeris ayarları — ephe dosyaları image'a bake edildi (services/ephe/)
+# Runtime indirme kaldırıldı (erkanerdem.net kapandı, astro.com olmamıştı, vb.)
+SWISSEPH_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ephe")
 
-# Vercel/Serverless kontrolü (Read-only file system hatasını önlemek için)
-IS_SERVERLESS = (
-    os.environ.get("VERCEL")
-    or os.environ.get("NETLIFY")
-    or os.environ.get("GAE_SERVICE")
-)
-if IS_SERVERLESS:
-    SWISSEPH_DATA_DIR = "/tmp/ephe"
-    logger.info(
-        "Serverless ortam algılandı, efemeris dizini /tmp/ephe olarak ayarlandı."
-    )
-else:
-    SWISSEPH_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ephe")
-
-
-def ensure_ephe_file(filename):
-    """Eğer dosya yerelde yoksa uzak sunucudan indirir."""
-    local_path = os.path.join(SWISSEPH_DATA_DIR, filename)
-    if not os.path.exists(local_path):
-        try:
-            remote_url = REMOTE_EPHE_BASE_URL + filename
-            logger.info(f"Efemeris dosyası indiriliyor: {filename} ...")
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            }
-            response = requests.get(remote_url, headers=headers, timeout=30)
-            if response.status_code == 200:
-                with open(local_path, "wb") as f:
-                    f.write(response.content)
-                logger.info(f"Başarıyla indirildi: {filename}")
-                return True
-            else:
-                logger.error(f"Dosya indirilemedi ({response.status_code}): {filename}")
-        except Exception as e:
-            logger.error(f"İndirme hatası ({filename}): {str(e)}")
-    return os.path.exists(local_path)
-
-
-# Klasörü oluştur
+# Klasörü oluştur (mevcutsa atla)
 if not os.path.exists(SWISSEPH_DATA_DIR):
     os.makedirs(SWISSEPH_DATA_DIR, exist_ok=True)
 
-# Temel efemeris dosyalarını kontrol et/indir (Sık kullanılanlar)
+# Temel efemeris dosyaları hazır mı kontrol et
 core_files = ["sepl_00.se1", "semo_00.se1", "seas_00.se1"]
 for cf in core_files:
-    ensure_ephe_file(cf)
+    if not os.path.exists(os.path.join(SWISSEPH_DATA_DIR, cf)):
+        logger.warning(f"Efemeris dosyası eksik: {cf}")
 
 swe.set_ephe_path(SWISSEPH_DATA_DIR)
 logger.info(f"Swiss Ephemeris veri yolu ayarlandı: {SWISSEPH_DATA_DIR}")

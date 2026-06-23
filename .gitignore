@@ -74,7 +74,7 @@ Thumbs.db
 .vscode/
 
 # Project specific
-ephe/
+# ephe/  # baked into image now
 sessions/
 aa.json
 sonuclar.md
