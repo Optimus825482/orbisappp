@@ -8,7 +8,7 @@
 {% import 'admin/components/period_selector.html' as period %}
 {% import 'admin/components/chart_card.html' as chart %}
 
-{% set ns = namespace(range=request.args.get('range', '7d')) %}
+{# range moved inline — Jinja child block scope hides parent `set` #}
 
 <!-- KPI ROW -->
 <div class="grid grid--kpi stagger">
@@ -24,7 +24,7 @@
     <h2 style="font-size: 14px; font-weight: 600;">Zaman aralığı</h2>
     <p class="text-ink-faint" style="font-size: 12px; margin-top: 2px;">Analytics ve AdMob aynı periyodu paylaşır</p>
   </div>
-  {{ period.selector(current=ns.range, base_url=request.path) }}
+  {{ period.selector(current=request.args.get('range', '7d'), base_url=request.path) }}
 </div>
 
 <!-- ANALYTICS (GA4) -->
@@ -53,10 +53,10 @@
   <div class="grid grid--2">
     {{ chart.card(title='Yeni Kullanıcı', subtitle='GA4 signups (range)', chart_id='chart-ga-signups',
        series=[{'name':'Signups','values':[],'color':'primary'}],
-       x_labels=[], current_range=ns.range, base_url=request.path, label='Signups') }}
+       x_labels=[], current_range=request.args.get('range', '7d'), base_url=request.path, label='Signups') }}
     {{ chart.card(title='Aktif Oturum', subtitle='GA4 sessions (range)', chart_id='chart-ga-sessions',
        series=[{'name':'Sessions','values':[],'color':'accent'}],
-       x_labels=[], current_range=ns.range, base_url=request.path, label='Sessions') }}
+       x_labels=[], current_range=request.args.get('range', '7d'), base_url=request.path, label='Sessions') }}
   </div>
 </section>
 
@@ -207,7 +207,7 @@
 {% block scripts %}
 <script>
 (async function () {
-  const range = '{{ ns.range }}';
+  const range = new URLSearchParams(window.location.search).get('range') || '7d';
   const fmt = (n) => (n === null || n === undefined || isNaN(n)) ? '—' : new Intl.NumberFormat('tr-TR').format(Math.round(n));
   const fmtUsd = (n) => (n === null || n === undefined || isNaN(n)) ? '—' : '$' + Number(n).toFixed(2);
   const fmtPct = (n) => (n === null || n === undefined || isNaN(n)) ? '-%' : n.toFixed(1) + '%';
