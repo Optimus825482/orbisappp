@@ -57,14 +57,25 @@ def create_app(test_config=None):
             mimetype="application/json",
         )
 
-    # app-ads.txt - AdMob reklam doğrulama (504 hatası fix)
+    # app-ads.txt / ads.txt - AdMob + AdSense doğrulama (504 fix)
+    # send_file() send_from_directory()'den daha hızlı çünkü ekstra os.path.isfile() lookup yapmaz
     @app.route("/app-ads.txt")
     def app_ads_txt():
-        return send_from_directory(app.static_folder, "app-ads.txt", mimetype="text/plain")
+        from flask import send_file
+        return send_file(
+            os.path.join(app.static_folder, "app-ads.txt"),
+            mimetype="text/plain",
+            max_age=3600,
+        )
 
     @app.route("/ads.txt")
     def ads_txt():
-        return send_from_directory(app.static_folder, "ads.txt", mimetype="text/plain")
+        from flask import send_file
+        return send_file(
+            os.path.join(app.static_folder, "ads.txt"),
+            mimetype="text/plain",
+            max_age=3600,
+        )
 
     # Filtreleri ekle
     import utils
