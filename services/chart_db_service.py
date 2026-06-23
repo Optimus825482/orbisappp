@@ -421,12 +421,12 @@ def cleanup_old_transits(days_old: int = 7) -> int:
     try:
         cutoff = (datetime.utcnow() - timedelta(days=days_old)).isoformat()
         
-        old_docs = (
-            db.collection("daily_transits")
-            .where("_created_at", "<", cutoff)
-            .limit(100)
-            .stream()
-        )
+            old_docs = (
+                db.collection("daily_transits")
+                .where(filter=("_created_at", "<", cutoff))
+                .limit(100)
+                .stream()
+            )
         
         deleted = 0
         for doc in old_docs:

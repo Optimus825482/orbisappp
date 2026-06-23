@@ -1,195 +1,365 @@
 {% extends "admin/layout.html" %}
-{% block title %}Kullanıcı Detayı{% endblock %}
+{% block title %}ORBIS Admin · Kullanıcı Detay{% endblock %}
 {% block page_title %}Kullanıcı Detayı{% endblock %}
-{% block page_subtitle %}Kullanıcı bilgileri, krediler ve işlem geçmişi{% endblock %}
+{% block page_subtitle %}Kullanıcı bilgileri ve işlem geçmişi{% endblock %}
+
+{% block page_actions %}
+<a href="{{ url_for('admin.users') }}" class="btn btn--ghost btn--sm">
+  <span class="material-symbols-outlined" style="font-size: 16px;">arrow_back</span>
+  Listeye Dön
+</a>
+{% endblock %}
 
 {% block content %}
-<div class="grid grid--main stagger" style="gap: var(--space-6);">
-  <aside class="stack-4">
-    <section class="card" id="profile-card">
-      <header class="card-head">
-        <h2 class="card-title">Profil</h2>
-        <span id="status-badge"></span>
-      </header>
-      <div class="card-body">
-        <div class="row" style="gap: var(--space-3); margin-bottom: var(--space-5);">
-          <img id="user-avatar" src="" alt="" style="width: 56px; height: 56px; border-radius: 50%; border: 2px solid var(--border); background: var(--surface-2);" onerror="this.outerHTML='<div class=sidebar-avatar style=width:56px;height:56px;><span class=material-symbols-outlined style=font-size:28px;>person</span></div>'">
-          <div style="min-width: 0; flex: 1;">
-            <h3 id="user-name" style="font-size: 17px; font-weight: 600; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></h3>
-            <p id="user-email" style="font-size: 13px; color: var(--ink-muted); margin: 4px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></p>
-          </div>
-        </div>
-
-        <div class="grid grid--2" style="gap: var(--space-2); margin-bottom: var(--space-5);">
-          <div style="padding: 12px; background: var(--surface-2); border-radius: var(--radius-md); text-align: center;">
-            <div class="text-faint" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 4px;">Kredi</div>
-            <div class="metric-value metric-value--sm tabular" id="user-credits" style="color: var(--accent);">—</div>
-          </div>
-          <div style="padding: 12px; background: var(--surface-2); border-radius: var(--radius-md); text-align: center;">
-            <div class="text-faint" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 4px;">Analiz</div>
-            <div class="metric-value metric-value--sm tabular" id="user-analyses">—</div>
-          </div>
-        </div>
-
-        <div class="stack-2">
-          <div class="info-row"><span class="info-label">Paket</span><span class="info-value" id="user-package">—</span></div>
-          <div class="info-row"><span class="info-label">Premium Bitiş</span><span class="info-value" id="user-expiry">—</span></div>
-          <div class="info-row"><span class="info-label">Kayıt Tarihi</span><span class="info-value" id="user-created">—</span></div>
-          <div class="info-row"><span class="info-label">Son Aktivite</span><span class="info-value" id="user-last-active">—</span></div>
-        </div>
-
-        <div class="stack-2" style="margin-top: var(--space-5);">
-          <button type="button" onclick="openPremiumModal()" class="action-btn action-btn--warning"><span class="material-symbols-outlined">diamond</span>Premium Yönet</button>
-          <button type="button" onclick="openCreditModal()" class="action-btn action-btn--primary"><span class="material-symbols-outlined">toll</span>Kredi Ekle/Çıkar</button>
-          <button type="button" onclick="sendPushToUser()" class="action-btn action-btn--info"><span class="material-symbols-outlined">notifications</span>Push Gönder</button>
-        </div>
-
-        <a href="{{ url_for('admin.users') }}" class="btn btn--ghost" style="width: 100%; margin-top: var(--space-3); text-decoration: none;"><span class="material-symbols-outlined">arrow_back</span>Kullanıcılara Dön</a>
+<div class="grid" style="grid-template-columns: 1fr 2fr; gap: var(--space-5);">
+  <aside class="card stagger" style="position: sticky; top: 92px; align-self: start;">
+    <div class="card-body">
+      <div id="profile-loading" class="empty">
+        <div class="login-spinner"></div>
+        <div class="empty-title">Yükleniyor…</div>
       </div>
-    </section>
+
+      <div id="profile-content" hidden>
+        <div style="text-align: center; margin-bottom: var(--space-5);">
+          <div class="sidebar-avatar" id="user-avatar-letter" style="width: 80px; height: 80px; font-size: 32px; margin: 0 auto var(--space-3);">U</div>
+          <h2 id="user-name" style="font-size: 18px; font-weight: 600; margin: 0;">—</h2>
+          <p id="user-email" style="font-size: 13px; color: var(--ink-muted); margin: 4px 0 0;">—</p>
+        </div>
+
+        <div id="status-badge" style="text-align: center; margin-bottom: var(--space-5);"></div>
+
+        <div class="grid grid--2 stagger" style="margin-bottom: var(--space-5);">
+          <div style="padding: var(--space-4); background: var(--glass-bg-2); border-radius: var(--radius-md); text-align: center;">
+            <div id="user-credits" class="metric-value metric-value--sm text-gradient" style="font-size: 24px;">0</div>
+            <div class="eyebrow" style="margin-top: 4px;">Kredi</div>
+          </div>
+          <div style="padding: var(--space-4); background: var(--glass-bg-2); border-radius: var(--radius-md); text-align: center;">
+            <div id="user-analyses" class="metric-value metric-value--sm" style="font-size: 24px;">0</div>
+            <div class="eyebrow" style="margin-top: 4px;">Analiz</div>
+          </div>
+        </div>
+
+        <div class="stack-3" style="font-size: 13px;">
+          <div class="info-row">
+            <span class="info-label">Paket</span>
+            <span id="user-package" class="info-value">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Premium Bitiş</span>
+            <span id="user-expiry" class="info-value">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Kayıt Tarihi</span>
+            <span id="user-created" class="info-value">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Son Aktivite</span>
+            <span id="user-last-active" class="info-value">—</span>
+          </div>
+        </div>
+
+        <div class="stack-3" style="margin-top: var(--space-5);">
+          <button class="action-btn action-btn--warning" type="button" onclick="openPremiumModal()">
+            <span class="material-symbols-outlined">diamond</span>
+            Premium Yönet
+          </button>
+          <button class="action-btn action-btn--primary" type="button" onclick="openCreditModal()">
+            <span class="material-symbols-outlined">toll</span>
+            Kredi Ekle/Çıkar
+          </button>
+          <button class="action-btn action-btn--info" type="button" onclick="sendPushToUser()">
+            <span class="material-symbols-outlined">notifications</span>
+            Push Gönder
+          </button>
+        </div>
+      </div>
+    </div>
   </aside>
 
-  <div class="stack-4">
-    <section class="card">
-      <header class="card-head"><div><h2 class="card-title">İşlem Geçmişi</h2><p class="card-subtitle">Son 20 satın alma</p></div></header>
-      <div class="card-body" style="padding: 0;" id="purchases-container"><div class="empty-state"><span class="material-symbols-outlined">receipt_long</span><div>Yükleniyor…</div></div></div>
+  <div class="stack-5">
+    <section class="card stagger">
+      <header class="card-head">
+        <div>
+          <h2 class="card-title">Günlük Kullanım</h2>
+          <p class="card-subtitle">Bugünkü aktivite özeti</p>
+        </div>
+        <span class="badge badge--dot badge--info">Bugün</span>
+      </header>
+      <div class="card-body">
+        <div class="grid grid--3">
+          <div>
+            <div class="eyebrow" style="margin-bottom: 4px;">Tarih</div>
+            <div id="daily-date" style="font-size: 18px; font-weight: 600;">—</div>
+          </div>
+          <div>
+            <div class="eyebrow" style="margin-bottom: 4px;">Analiz</div>
+            <div id="daily-count" class="metric-value metric-value--sm" style="font-size: 24px;">0</div>
+          </div>
+          <div>
+            <div class="eyebrow" style="margin-bottom: 4px;">Reklam İzlendi</div>
+            <div id="daily-ads" class="metric-value metric-value--sm" style="font-size: 24px;">0</div>
+          </div>
+        </div>
+      </div>
     </section>
-    <section class="card">
-      <header class="card-head"><div><h2 class="card-title">Bildirim Token'ları</h2></div><span class="badge badge--neutral" id="token-count">0</span></header>
-      <div class="card-body" style="padding: 0;" id="tokens-container"><div class="empty-state"><span class="material-symbols-outlined">notifications_active</span><div>Yükleniyor…</div></div></div>
+
+    <section class="card stagger">
+      <header class="card-head">
+        <div>
+          <h2 class="card-title">Kayıtlı Cihazlar</h2>
+          <p class="card-subtitle">Push bildirim token'ları</p>
+        </div>
+        <span class="badge" id="device-count">—</span>
+      </header>
+      <div class="card-body">
+        <div id="fcm-tokens" class="stack-3">
+          <p style="color: var(--ink-faint); font-size: 13px; margin: 0;">Yükleniyor…</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card stagger">
+      <header class="card-head">
+        <div>
+          <h2 class="card-title">Satın Alma Geçmişi</h2>
+          <p class="card-subtitle">Premium ve kredi satışları</p>
+        </div>
+        <span class="badge" id="purchase-count">—</span>
+      </header>
+      <div class="card-body" style="padding: 0;">
+        <ul id="purchase-history" class="activity">
+          <li class="empty" style="padding: var(--space-8) var(--space-6);">
+            <div class="empty-icon"><span class="material-symbols-outlined">receipt_long</span></div>
+            <div class="empty-title">Yükleniyor…</div>
+          </li>
+        </ul>
+      </div>
     </section>
   </div>
 </div>
 
-<div id="premium-modal" class="modal-backdrop" hidden>
+<div id="premium-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-label="Premium yönetimi" hidden>
   <div class="modal">
-    <div class="modal-head"><h2 class="modal-title">Premium Yönetimi</h2><button type="button" class="icon-btn" onclick="closeModal('premium-modal')"><span class="material-symbols-outlined">close</span></button></div>
-    <div class="modal-body stack-3">
-      <div class="form-row"><label class="form-label">Paket</label><select id="premium-package" class="select"><option value="daily">Günlük</option><option value="monthly">Aylık</option><option value="yearly">Yıllık</option><option value="lifetime">Lifetime</option></select></div>
-      <div class="form-row"><label class="form-label">Süre (ay)</label><input type="number" id="premium-months" class="input" value="1" min="1" /></div>
-      <div class="form-row"><label class="form-label">Bonus Kredi</label><input type="number" id="premium-credits" class="input" value="0" min="0" /></div>
+    <header class="modal-head">
+      <h3 class="modal-title">Premium Yönetimi</h3>
+      <button class="icon-btn icon-btn--ghost" type="button" onclick="closeModal('premium-modal')" aria-label="Kapat"><span class="material-symbols-outlined">close</span></button>
+    </header>
+    <div class="modal-body stack-4">
+      <label class="row" style="gap: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--primary-soft); border-radius: var(--radius-md); cursor: pointer;">
+        <input type="checkbox" id="modal-premium-active" />
+        <span style="font-size: 14px; font-weight: 500; color: var(--ink);">Premium Aktif</span>
+      </label>
+      <div>
+        <label for="modal-package">Paket</label>
+        <select id="modal-package" class="select">
+          <option value="admin_grant">Admin Grant</option>
+          <option value="monthly">Aylık</option>
+          <option value="yearly">Yıllık</option>
+          <option value="lifetime">Ömür Boyu</option>
+        </select>
+      </div>
+      <div>
+        <label for="modal-months">Süre (Ay)</label>
+        <input type="number" id="modal-months" value="1" min="1" class="input" />
+      </div>
+      <div>
+        <label for="modal-bonus-credits">Bonus Kredi</label>
+        <input type="number" id="modal-bonus-credits" value="0" min="0" class="input" />
+      </div>
     </div>
-    <div class="modal-foot">
-      <button type="button" onclick="closeModal('premium-modal')" class="btn btn--ghost">İptal</button>
-      <button type="button" onclick="removePremium()" class="btn btn--danger-ghost">Kaldır</button>
-      <button type="button" onclick="savePremium()" class="btn btn--primary">Premium Aktive Et</button>
-    </div>
+    <footer class="modal-foot">
+      <button class="btn btn--ghost" type="button" onclick="closeModal('premium-modal')">İptal</button>
+      <button class="btn btn--danger" type="button" onclick="removePremium()">Kaldır</button>
+      <button class="btn btn--primary" type="button" onclick="savePremium()">
+        <span class="material-symbols-outlined">save</span>
+        Kaydet
+      </button>
+    </footer>
   </div>
 </div>
 
-<div id="credit-modal" class="modal-backdrop" hidden>
+<div id="credit-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-label="Kredi işlemi" hidden>
   <div class="modal">
-    <div class="modal-head"><h2 class="modal-title">Kredi Yönetimi</h2><button type="button" class="icon-btn" onclick="closeModal('credit-modal')"><span class="material-symbols-outlined">close</span></button></div>
-    <div class="modal-body stack-3">
-      <div class="form-row"><label class="form-label">İşlem</label><select id="credit-action" class="select"><option value="add">Ekle (+)</option><option value="subtract">Çıkar (−)</option><option value="set">Ayarla (=)</option></select></div>
-      <div class="form-row"><label class="form-label">Miktar</label><input type="number" id="credit-amount" class="input" value="10" min="0" /></div>
+    <header class="modal-head">
+      <h3 class="modal-title">Kredi İşlemi</h3>
+      <button class="icon-btn icon-btn--ghost" type="button" onclick="closeModal('credit-modal')" aria-label="Kapat"><span class="material-symbols-outlined">close</span></button>
+    </header>
+    <div class="modal-body stack-4">
+      <div>
+        <label for="modal-credit-action">İşlem Tipi</label>
+        <select id="modal-credit-action" class="select">
+          <option value="add">Kredi Ekle</option>
+          <option value="subtract">Kredi Çıkar</option>
+          <option value="set">Kredi Ayarla</option>
+        </select>
+      </div>
+      <div>
+        <label for="modal-credit-amount">Miktar</label>
+        <input type="number" id="modal-credit-amount" value="10" min="0" class="input" />
+      </div>
     </div>
-    <div class="modal-foot">
-      <button type="button" onclick="closeModal('credit-modal')" class="btn btn--ghost">İptal</button>
-      <button type="button" onclick="saveCredits()" class="btn btn--primary">Uygula</button>
-    </div>
+    <footer class="modal-foot">
+      <button class="btn btn--ghost" type="button" onclick="closeModal('credit-modal')">İptal</button>
+      <button class="btn btn--primary" type="button" onclick="saveCredits()">
+        <span class="material-symbols-outlined">check</span>
+        Uygula
+      </button>
+    </footer>
   </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-const USER_ID = {{ user_id | tojson }};
-let USER_DATA = null;
+  const USER_ID = {{ user_id | tojson }};
+  let USER_DATA = null;
 
-async function loadUser() {
-  try {
-    const r = await fetch(`/admin/api/users/${USER_ID}`, { credentials: 'same-origin' });
-    const j = await r.json();
-    if (!j.success) { showToast('Kullanıcı yüklenemedi', 'error'); return; }
-    USER_DATA = j.data;
-    renderUser(); renderPurchases(); renderTokens();
-  } catch (e) { showToast('Bağlantı hatası', 'error'); }
-}
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
 
-function renderUser() {
-  const d = USER_DATA;
-  document.getElementById('user-avatar').src = d.photoURL || '';
-  document.getElementById('user-name').textContent = d.displayName || d.email || 'Anonim';
-  document.getElementById('user-email').textContent = d.email || '—';
-  document.getElementById('user-credits').textContent = d.credits != null ? formatNumber(d.credits) : '—';
-  document.getElementById('user-analyses').textContent = d.totalAnalyses != null ? formatNumber(d.totalAnalyses) : '—';
-  document.getElementById('user-package').textContent = d.premiumPackageId || 'Ücretsiz';
-  document.getElementById('user-expiry').textContent = d.premiumExpiry ? new Date(d.premiumExpiry).toLocaleDateString('tr-TR') : '—';
-  document.getElementById('user-created').textContent = d.createdAt ? new Date(d.createdAt).toLocaleDateString('tr-TR') : '—';
-  document.getElementById('user-last-active').textContent = d.dailyUsage?.date || '—';
-  document.getElementById('status-badge').innerHTML = d.isPremium ? '<span class="badge badge--dot badge--success">Premium</span>' : '<span class="badge badge--neutral">Ücretsiz</span>';
-}
+  async function loadUser() {
+    try {
+      const r = await fetch(`/admin/api/users/${USER_ID}`, { credentials: 'same-origin' });
+      const j = await r.json();
+      if (!j.success) { showToast('Kullanıcı yüklenemedi', 'error'); return; }
+      USER_DATA = j.data;
+      renderUser(); renderPurchases(); renderTokens();
+    } catch (e) { showToast('Bağlantı hatası', 'error'); }
+  }
 
-function renderPurchases() {
-  const list = USER_DATA.purchases || [];
-  const c = document.getElementById('purchases-container');
-  if (!list.length) { c.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">receipt_long</span><div>Henüz işlem yok</div></div>'; return; }
-  c.innerHTML = list.map(p => `
-    <div class="info-row" style="padding: 12px var(--space-6); margin: 0;">
-      <span class="badge ${p.type === 'premium' ? 'badge--warning' : 'badge--primary'}">${p.type === 'premium' ? 'Premium' : 'Kredi'}</span>
-      <div style="flex:1;">
-        <div style="font-size:13px;font-weight:500;color:var(--ink);">${escapeHtml(p.type === 'premium' ? p.packageId || p.item : (p.credits || p.amount) + ' kredi')}</div>
-        <div style="font-size:11px;color:var(--ink-faint);">${p.timestamp ? new Date(p.timestamp).toLocaleString('tr-TR') : ''}</div>
-      </div>
-    </div>
-  `).join('');
-}
+  function renderUser() {
+    document.getElementById('profile-loading').hidden = true;
+    document.getElementById('profile-content').hidden = false;
 
-function renderTokens() {
-  const tokens = USER_DATA.fcmTokens || [];
-  document.getElementById('token-count').textContent = tokens.length;
-  const c = document.getElementById('tokens-container');
-  if (!tokens.length) { c.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">notifications_off</span><div>Token yok</div></div>'; return; }
-  c.innerHTML = tokens.map(t => `<div class="info-row" style="padding: 10px var(--space-6); margin: 0;"><span style="font-family:var(--font-mono);font-size:11px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(t.token || '')}</span><span class="text-faint" style="font-size:10px;flex-shrink:0;">${escapeHtml(t.platform || '?')}</span></div>`).join('');
-}
+    const d = USER_DATA;
+    document.getElementById('user-avatar-letter').textContent = (d.displayName || d.email || 'U').charAt(0).toUpperCase();
+    document.getElementById('user-name').textContent = d.displayName || 'İsimsiz';
+    document.getElementById('user-email').textContent = d.email || '—';
+    document.getElementById('user-credits').textContent = d.credits != null ? formatNumber(d.credits) : '—';
+    document.getElementById('user-analyses').textContent = d.totalAnalyses != null ? formatNumber(d.totalAnalyses) : '—';
+    document.getElementById('user-package').textContent = d.premiumPackageId || 'Ücretsiz';
+    document.getElementById('user-expiry').textContent = d.premiumExpiry ? formatDate(d.premiumExpiry) : '—';
+    document.getElementById('user-created').textContent = d.createdAt ? formatDate(d.createdAt) : '—';
+    document.getElementById('user-last-active').textContent = d.dailyUsage?.date || '—';
+    document.getElementById('status-badge').innerHTML = d.isPremium
+      ? '<span class="badge badge--dot badge--success"><span class="material-symbols-outlined" style="font-size: 14px;">diamond</span>Premium Üye</span>'
+      : '<span class="badge badge--neutral"><span class="material-symbols-outlined" style="font-size: 14px;">person</span>Ücretsiz Üye</span>';
 
-function openModal(id) { document.getElementById(id).hidden = false; }
-function closeModal(id) { document.getElementById(id).hidden = true; }
-function openPremiumModal() { openModal('premium-modal'); }
-function openCreditModal() { openModal('credit-modal'); }
+    if (d.dailyUsage) {
+      document.getElementById('daily-date').textContent = d.dailyUsage.date || '—';
+      document.getElementById('daily-count').textContent = d.dailyUsage.count || 0;
+      document.getElementById('daily-ads').textContent = d.dailyUsage.adsWatched || 0;
+    }
+  }
 
-async function savePremium() {
-  const pkg = document.getElementById('premium-package').value;
-  const months = parseInt(document.getElementById('premium-months').value) || 1;
-  const credits = parseInt(document.getElementById('premium-credits').value) || 0;
-  try {
-    const r = await fetch(`/admin/api/users/${USER_ID}/premium`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ isPremium: true, packageId: pkg, months, credits }) });
-    const j = await r.json();
-    if (j.success) { showToast('Premium aktif edildi', 'success'); closeModal('premium-modal'); setTimeout(loadUser, 600); }
-    else showToast(j.message || 'Hata', 'error');
-  } catch (e) { showToast(e.message, 'error'); }
-}
-async function removePremium() {
-  if (!confirm('Premium kaldırılsın mı?')) return;
-  try {
-    const r = await fetch(`/admin/api/users/${USER_ID}/premium`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ isPremium: false }) });
-    const j = await r.json();
-    if (j.success) { showToast('Premium kaldırıldı', 'success'); closeModal('premium-modal'); setTimeout(loadUser, 600); }
-    else showToast(j.message || 'Hata', 'error');
-  } catch (e) { showToast(e.message, 'error'); }
-}
-async function saveCredits() {
-  const action = document.getElementById('credit-action').value;
-  const amount = parseInt(document.getElementById('credit-amount').value) || 0;
-  try {
-    const r = await fetch(`/admin/api/users/${USER_ID}/credits`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, amount }) });
-    const j = await r.json();
-    if (j.success) { showToast('Kredi güncellendi', 'success'); closeModal('credit-modal'); setTimeout(loadUser, 600); }
-    else showToast(j.message || 'Hata', 'error');
-  } catch (e) { showToast(e.message, 'error'); }
-}
-async function sendPushToUser() {
-  const title = prompt('Başlık:'); if (!title) return;
-  const body = prompt('Mesaj:'); if (!body) return;
-  try {
-    const r = await fetch('/admin/api/push/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ targetType: 'user', target: USER_ID, title, body }) });
-    const j = await r.json();
-    if (j.success) showToast('Bildirim gönderildi', 'success');
-    else showToast(j.message || 'Hata', 'error');
-  } catch (e) { showToast(e.message, 'error'); }
-}
-function escapeHtml(s) { if (s == null) return ''; return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-document.addEventListener('DOMContentLoaded', loadUser);
+  function renderPurchases() {
+    const list = USER_DATA.purchases || [];
+    const c = document.getElementById('purchase-history');
+    document.getElementById('purchase-count').textContent = list.length + ' kayıt';
+    if (!list.length) {
+      c.innerHTML = '<li class="empty" style="padding: var(--space-8) var(--space-6);"><div class="empty-icon"><span class="material-symbols-outlined">receipt_long</span></div><div class="empty-title">İşlem geçmişi yok</div></li>';
+      return;
+    }
+    c.innerHTML = list.map(p => {
+      const isPremium = p.type === 'premium';
+      return '<li class="activity-item">' +
+        '<div class="activity-icon activity-icon--' + (isPremium ? 'info' : 'up') + '"><span class="material-symbols-outlined">' + (isPremium ? 'diamond' : 'toll') + '</span></div>' +
+        '<div class="activity-body">' +
+          '<div class="activity-title">' + escapeHtml(p.type === 'premium' ? p.packageId || p.item : ((p.credits || p.amount) + ' kredi')) + '</div>' +
+          '<div class="activity-meta">' + (p.timestamp ? formatDate(p.timestamp) : '') + '</div>' +
+        '</div>' +
+        '<span class="badge ' + (isPremium ? 'badge--warning' : 'badge--primary') + '">' + (isPremium ? 'Premium' : 'Kredi') + '</span>' +
+      '</li>';
+    }).join('');
+  }
+
+  function renderTokens() {
+    const tokens = USER_DATA.fcmTokens || [];
+    document.getElementById('device-count').textContent = tokens.length + ' cihaz';
+    const c = document.getElementById('fcm-tokens');
+    if (!tokens.length) {
+      c.innerHTML = '<div class="empty" style="padding: var(--space-6) 0;"><div class="empty-icon"><span class="material-symbols-outlined">devices</span></div><div class="empty-title">Token yok</div></div>';
+      return;
+    }
+    c.innerHTML = tokens.map(t => {
+      const icon = t.platform === 'android' ? 'android' : t.platform === 'ios' ? 'phone_iphone' : 'computer';
+      return '<div class="list-row">' +
+        '<span class="metric-icon metric-icon--info" style="width: 32px; height: 32px;"><span class="material-symbols-outlined" style="font-size: 16px;">' + icon + '</span></span>' +
+        '<div style="flex: 1; min-width: 0;">' +
+          '<div style="font-family: var(--font-mono); font-size: 12px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + escapeHtml(t.token || '') + '</div>' +
+          '<div class="eyebrow" style="margin-top: 2px;">' + escapeHtml(t.platform || '?') + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function openModal(id) { document.getElementById(id).hidden = false; }
+  function closeModal(id) { document.getElementById(id).hidden = true; }
+  function openPremiumModal() {
+    document.getElementById('modal-premium-active').checked = !!USER_DATA.isPremium;
+    openModal('premium-modal');
+  }
+  function openCreditModal() { openModal('credit-modal'); }
+
+  async function savePremium() {
+    const isPremium = document.getElementById('modal-premium-active').checked;
+    const pkg = document.getElementById('modal-package').value;
+    const months = parseInt(document.getElementById('modal-months').value) || 1;
+    const credits = parseInt(document.getElementById('modal-bonus-credits').value) || 0;
+    try {
+      const r = await fetch(`/admin/api/users/${USER_ID}/premium`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPremium, packageId: pkg, months, credits })
+      });
+      const j = await r.json();
+      if (j.success) { showToast(isPremium ? 'Premium aktif edildi' : 'Premium kaldırıldı', 'success'); closeModal('premium-modal'); setTimeout(loadUser, 600); }
+      else showToast(j.message || j.error || 'Hata', 'error');
+    } catch (e) { showToast(e.message, 'error'); }
+  }
+
+  async function removePremium() {
+    if (!confirm('Premium kaldırılsın mı?')) return;
+    try {
+      const r = await fetch(`/admin/api/users/${USER_ID}/premium`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPremium: false })
+      });
+      const j = await r.json();
+      if (j.success) { showToast('Premium kaldırıldı', 'success'); closeModal('premium-modal'); setTimeout(loadUser, 600); }
+      else showToast(j.message || 'Hata', 'error');
+    } catch (e) { showToast(e.message, 'error'); }
+  }
+
+  async function saveCredits() {
+    const action = document.getElementById('modal-credit-action').value;
+    const amount = parseInt(document.getElementById('modal-credit-amount').value) || 0;
+    try {
+      const r = await fetch(`/admin/api/users/${USER_ID}/credits`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, amount })
+      });
+      const j = await r.json();
+      if (j.success) { showToast('Kredi güncellendi', 'success'); closeModal('credit-modal'); setTimeout(loadUser, 600); }
+      else showToast(j.message || 'Hata', 'error');
+    } catch (e) { showToast(e.message, 'error'); }
+  }
+
+  async function sendPushToUser() {
+    const title = prompt('Başlık:'); if (!title) return;
+    const body = prompt('Mesaj:'); if (!body) return;
+    try {
+      const r = await fetch('/admin/api/push/send', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetType: 'user', target: USER_ID, title, body })
+      });
+      const j = await r.json();
+      if (j.success) showToast('Bildirim gönderildi', 'success');
+      else showToast(j.message || 'Hata', 'error');
+    } catch (e) { showToast(e.message, 'error'); }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadUser);
 </script>
 {% endblock %}

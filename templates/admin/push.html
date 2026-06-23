@@ -1,0 +1,263 @@
+{% extends "admin/layout.html" %}
+{% block title %}Push Bildirimleri{% endblock %}
+{% block page_title %}Push Bildirimleri{% endblock %}
+{% block page_subtitle %}Kullanıcılara toplu veya hedefli bildirim gönder{% endblock %}
+
+{% block content %}
+<div class="grid grid--2" style="gap: var(--space-6); align-items: start;">
+  <!-- ═══ Send Form ═══ -->
+  <section class="card" id="push-form-card">
+    <header class="card-head">
+      <div>
+        <h2 class="card-title">Bildirim Gönder</h2>
+        <p class="card-subtitle">Hedef, başlık ve mesajı belirleyin</p>
+      </div>
+    </header>
+    <div class="card-body stack-4">
+      <form id="push-form" class="stack-4">
+        <!-- Target type -->
+        <div>
+          <label class="label">Hedef</label>
+          <div class="row" style="gap: var(--space-2); flex-wrap: wrap;">
+            <label class="btn btn--secondary btn--sm" style="cursor: pointer; flex: 1; text-align: center;">
+              <input type="radio" name="targetType" value="all" class="hidden" checked />
+              <span class="row" style="gap: 4px; justify-content: center;">
+                <span class="material-symbols-outlined" style="font-size: 16px;">groups</span> Herkese
+              </span>
+            </label>
+            <label class="btn btn--secondary btn--sm" style="cursor: pointer; flex: 1; text-align: center;">
+              <input type="radio" name="targetType" value="topic" class="hidden" />
+              <span class="row" style="gap: 4px; justify-content: center;">
+                <span class="material-symbols-outlined" style="font-size: 16px;">label</span> Topic
+              </span>
+            </label>
+            <label class="btn btn--secondary btn--sm" style="cursor: pointer; flex: 1; text-align: center;">
+              <input type="radio" name="targetType" value="user" class="hidden" />
+              <span class="row" style="gap: 4px; justify-content: center;">
+                <span class="material-symbols-outlined" style="font-size: 16px;">person</span> Kullanıcı
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Topic select (hidden by default) -->
+        <div id="topic-select" hidden>
+          <label class="label" for="topic">Topic Seç</label>
+          <select id="topic" class="select">
+            <option value="all_users">Tüm Kullanıcılar</option>
+            <option value="premium_users">Premium Kullanıcılar</option>
+            <option value="daily_horoscope">Günlük Burç Aboneleri</option>
+            <option value="weekly_horoscope">Haftalık Burç Aboneleri</option>
+          </select>
+        </div>
+
+        <!-- User ID (hidden by default) -->
+        <div id="user-select" hidden>
+          <label class="label" for="userId">Kullanıcı ID</label>
+          <input type="text" id="userId" class="input" placeholder="Firebase User ID" />
+        </div>
+
+        <!-- Title -->
+        <div>
+          <label class="label" for="title">Başlık</label>
+          <input type="text" id="title" class="input" placeholder="Bildirim başlığı" required />
+        </div>
+
+        <!-- Body -->
+        <div>
+          <label class="label" for="body">Mesaj</label>
+          <textarea id="body" class="input" rows="4" placeholder="Bildirim içeriği" required style="resize: vertical; min-height: 80px;"></textarea>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn btn--primary btn--lg" style="width: 100%;">
+          <span class="material-symbols-outlined">send</span> Bildirimi Gönder
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ═══ Sidebar: templates + preview ═══ -->
+  <div class="stack-6">
+    <!-- Templates -->
+    <section class="card">
+      <header class="card-head">
+        <div>
+          <h2 class="card-title">Hazır Şablonlar</h2>
+          <p class="card-subtitle">Tek tıkla formu doldur</p>
+        </div>
+      </header>
+      <div class="card-body stack-2">
+        <button type="button" onclick="useTemplate('daily')" class="btn btn--secondary" style="width: 100%; justify-content: flex-start;">
+          <span class="material-symbols-outlined" style="color: var(--warning);">wb_sunny</span> Günlük Burç Yorumu
+        </button>
+        <button type="button" onclick="useTemplate('weekly')" class="btn btn--secondary" style="width: 100%; justify-content: flex-start;">
+          <span class="material-symbols-outlined" style="color: var(--accent);">date_range</span> Haftalık Analiz
+        </button>
+        <button type="button" onclick="useTemplate('promo')" class="btn btn--secondary" style="width: 100%; justify-content: flex-start;">
+          <span class="material-symbols-outlined" style="color: var(--success);">local_offer</span> Premium Kampanya
+        </button>
+        <button type="button" onclick="useTemplate('update')" class="btn btn--secondary" style="width: 100%; justify-content: flex-start;">
+          <span class="material-symbols-outlined" style="color: var(--primary);">system_update</span> Güncelleme Duyurusu
+        </button>
+      </div>
+    </section>
+
+    <!-- Preview -->
+    <section class="card">
+      <header class="card-head">
+        <div>
+          <h2 class="card-title">Önizleme</h2>
+          <p class="card-subtitle">Gönderilecek bildirimin görünümü</p>
+        </div>
+      </header>
+      <div class="card-body">
+        <div style="background: var(--surface-2); border-radius: var(--radius-lg); padding: var(--space-4);">
+          <div class="row" style="gap: var(--space-3);">
+            <div style="width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <span class="material-symbols-outlined" style="color: white; font-size: 20px;">all_inclusive</span>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <div class="row" style="justify-content: space-between;">
+                <span style="font-weight: 600; font-size: 13px;" id="preview-title">ORBIS</span>
+                <span class="text-faint" style="font-size: 10px;">şimdi</span>
+              </div>
+              <p class="text-muted" style="font-size: 12px; margin-top: 2px;" id="preview-body">Bildirim önizlemesi burada görünecek…</p>
+            </div>
+          </div>
+        </div>
+        <p class="text-faint" style="font-size: 10px; text-align: center; margin-top: var(--space-3);">Gerçek görünüm cihaza göre değişebilir</p>
+      </div>
+    </section>
+
+    <!-- Topic Stats -->
+    <section class="card">
+      <header class="card-head">
+        <div>
+          <h2 class="card-title">Topic İstatistikleri</h2>
+          <p class="card-subtitle">Abone sayıları</p>
+        </div>
+      </header>
+      <div class="card-body stack-2" style="padding-top: 0;">
+        <div class="row" style="justify-content: space-between; padding: var(--space-3) 0; border-bottom: 1px solid var(--border);">
+          <span style="font-size: 13px;">all_users</span>
+          <span class="text-faint" style="font-size: 12px;">Tüm kayıtlı cihazlar</span>
+        </div>
+        <div class="row" style="justify-content: space-between; padding: var(--space-3) 0; border-bottom: 1px solid var(--border);">
+          <span style="font-size: 13px;">premium_users</span>
+          <span class="text-faint" style="font-size: 12px;">Premium üyeler</span>
+        </div>
+        <div class="row" style="justify-content: space-between; padding: var(--space-3) 0;">
+          <span style="font-size: 13px;">daily_horoscope</span>
+          <span class="text-faint" style="font-size: 12px;">Günlük aboneler</span>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const form = document.getElementById('push-form');
+
+  // Target type toggling
+  document.querySelectorAll('input[name="targetType"]').forEach(function (radio) {
+    radio.addEventListener('change', function () {
+      document.querySelectorAll('input[name="targetType"]').forEach(function (r) {
+        r.closest('.btn').classList.remove('btn--primary');
+        r.closest('.btn').classList.add('btn--secondary');
+      });
+      this.closest('.btn').classList.remove('btn--secondary');
+      this.closest('.btn').classList.add('btn--primary');
+
+      var v = this.value;
+      document.getElementById('topic-select').hidden = v !== 'topic';
+      document.getElementById('user-select').hidden = v !== 'user';
+    });
+  });
+  // Init first as selected
+  var firstRadio = document.querySelector('input[name="targetType"]');
+  if (firstRadio) {
+    firstRadio.closest('.btn').classList.remove('btn--secondary');
+    firstRadio.closest('.btn').classList.add('btn--primary');
+  }
+
+  // Live preview
+  document.getElementById('title').addEventListener('input', updatePreview);
+  document.getElementById('body').addEventListener('input', updatePreview);
+
+  function updatePreview() {
+    var title = document.getElementById('title').value || 'ORBIS';
+    var body = document.getElementById('body').value || 'Bildirim önizlemesi burada görünecek…';
+    document.getElementById('preview-title').textContent = title;
+    document.getElementById('preview-body').textContent = body;
+  }
+
+  // Templates
+  var TEMPLATES = {
+    daily: { title: '🌟 Günlük Burç Yorumunuz Hazır!', body: 'Bugün yıldızlar sizin için ne söylüyor? Günlük kozmik rehberinizi keşfedin.' },
+    weekly: { title: '📅 Haftalık Kozmik Analiz', body: 'Bu haftanın astrolojik enerjileri ve size özel tavsiyeleri görüntüleyin.' },
+    promo: { title: '💎 Premium\'da %50 İndirim!', body: 'Sınırlı süre! Premium üyelikte büyük fırsat. Hemen keşfedin.' },
+    update: { title: '🚀 ORBIS Güncellendi!', body: 'Yeni özellikler ve iyileştirmeler sizi bekliyor. Uygulamayı açın ve keşfedin.' },
+  };
+
+  window.useTemplate = function (key) {
+    var t = TEMPLATES[key];
+    if (!t) return;
+    document.getElementById('title').value = t.title;
+    document.getElementById('body').value = t.body;
+    updatePreview();
+  };
+
+  // Form submit
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    var targetType = document.querySelector('input[name="targetType"]:checked');
+    if (!targetType) return;
+    targetType = targetType.value;
+
+    var title = document.getElementById('title').value.trim();
+    var body = document.getElementById('body').value.trim();
+    if (!title || !body) { showToast('Başlık ve mesaj gerekli', 'error'); return; }
+
+    var target = null;
+    if (targetType === 'topic') {
+      target = document.getElementById('topic').value;
+    } else if (targetType === 'user') {
+      target = document.getElementById('userId').value.trim();
+      if (!target) { showToast('Kullanıcı ID gerekli', 'error'); return; }
+    }
+
+    var btn = form.querySelector('button[type="submit"]');
+    var orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span> Gönderiliyor…';
+
+    try {
+      var r = await fetch('/admin/api/push/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetType: targetType, target: target, title: title, body: body }),
+      });
+      var j = await r.json();
+      if (j.success) {
+        showToast('Bildirim başarıyla gönderildi!', 'success');
+        document.getElementById('title').value = '';
+        document.getElementById('body').value = '';
+        updatePreview();
+      } else {
+        throw new Error(j.error || 'Gönderim başarısız');
+      }
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = orig;
+    }
+  });
+})();
+</script>
+{% endblock %}

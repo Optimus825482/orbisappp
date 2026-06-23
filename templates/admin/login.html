@@ -4,224 +4,80 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#f3f0ff" />
   <title>ORBIS Admin · Giriş</title>
 
   <script>
     (function () {
-      try {
-        var t = localStorage.getItem('orbis-theme');
-        if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', t);
-        document.documentElement.style.colorScheme = t;
-      } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); }
+      try { document.documentElement.setAttribute('data-theme', 'light'); } catch (e) {}
     })();
   </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..700,0..1,-50..200&display=block"
-    rel="stylesheet" />
-
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/tokens.css') }}?v=20260624" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/base.css') }}?v=20260624" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/components.css') }}?v=20260624" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/motion.css') }}?v=20260624" />
-  <style>
-    .login-body {
-      min-height: 100dvh;
-      display: grid;
-      place-items: center;
-      padding: var(--space-5);
-      position: relative;
-      overflow: hidden;
-    }
-    .login-body::before {
-      content: "";
-      position: absolute;
-      inset: -20%;
-      background:
-        radial-gradient(circle at 20% 30%, var(--accent-soft) 0%, transparent 40%),
-        radial-gradient(circle at 80% 70%, var(--accent-soft) 0%, transparent 40%);
-      pointer-events: none;
-      z-index: 0;
-    }
-    .login-card {
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      max-width: 420px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-2xl);
-      padding: var(--space-10) var(--space-8) var(--space-8);
-      box-shadow: var(--shadow-xl);
-      animation: fade-up var(--dur-slower) var(--ease-out);
-    }
-    .login-brand {
-      display: flex;
-      align-items: center;
-      gap: var(--space-3);
-      margin-bottom: var(--space-8);
-    }
-    .login-brand-mark {
-      width: 40px;
-      height: 40px;
-      border-radius: var(--radius-md);
-      background: var(--ink);
-      color: var(--ink-inverse);
-      display: grid;
-      place-items: center;
-      font-family: var(--font-display);
-      font-weight: var(--fw-bold);
-      font-size: 22px;
-      letter-spacing: -0.04em;
-    }
-    .login-brand-text { display: flex; flex-direction: column; line-height: 1.1; }
-    .login-brand-name {
-      font-family: var(--font-display);
-      font-size: 18px;
-      font-weight: var(--fw-bold);
-      letter-spacing: -0.01em;
-      color: var(--ink);
-    }
-    .login-brand-sub {
-      font-size: 11px;
-      color: var(--ink-faint);
-      margin-top: 2px;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-    .login-head { margin-bottom: var(--space-7); }
-    .login-title {
-      font-family: var(--font-display);
-      font-size: 28px;
-      font-weight: var(--fw-bold);
-      letter-spacing: var(--tracking-tight);
-      line-height: var(--lh-tight);
-      color: var(--ink);
-      margin: 0 0 var(--space-2);
-    }
-    .login-subtitle {
-      font-size: var(--fs-base);
-      color: var(--ink-muted);
-      line-height: var(--lh-base);
-      margin: 0;
-    }
-    .login-form { display: flex; flex-direction: column; gap: var(--space-4); }
-    .login-divider {
-      display: flex;
-      align-items: center;
-      gap: var(--space-3);
-      color: var(--ink-faint);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-weight: var(--fw-semibold);
-    }
-    .login-divider::before, .login-divider::after {
-      content: "";
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-    .google-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: var(--space-3);
-      width: 100%;
-      height: 44px;
-      padding: 0 var(--space-5);
-      background: var(--surface);
-      color: var(--ink);
-      border: 1px solid var(--border-strong);
-      border-radius: var(--radius-md);
-      font-family: inherit;
-      font-size: var(--fs-base);
-      font-weight: var(--fw-medium);
-      cursor: pointer;
-      transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
-    }
-    .google-btn:hover { background: var(--surface-2); border-color: var(--ink-faint); }
-    .google-btn:active { transform: translateY(0.5px); }
-    .google-icon { width: 18px; height: 18px; flex-shrink: 0; }
-    .login-foot {
-      margin-top: var(--space-6);
-      text-align: center;
-      font-size: var(--fs-sm);
-      color: var(--ink-faint);
-    }
-    .login-meta {
-      position: relative;
-      z-index: 1;
-      margin-top: var(--space-6);
-      text-align: center;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      color: var(--ink-faint);
-      letter-spacing: 0.04em;
-    }
-    .login-loading {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: var(--space-3);
-      padding: var(--space-4) 0;
-    }
-    .login-spinner {
-      width: 28px;
-      height: 28px;
-      border: 2.5px solid var(--accent-soft);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-  </style>
-</head>
-<body class="login-body">
-  <main class="login-card" role="main">
-    <div class="login-brand">
-      <span class="login-brand-mark" aria-hidden="true">∞</span>
-      <div class="login-brand-text">
-        <span class="login-brand-name">ORBIS</span>
-        <span class="login-brand-sub">Admin Console</span>
-      </div>
-    </div>
-
-    <div class="login-head">
-      <h1 class="login-title">Yönetici Girişi</h1>
-      <p class="login-subtitle">Hesabınızla devam edin</p>
-    </div>
-
-    <div id="error" class="alert alert--danger" hidden role="alert">
-      <span class="material-symbols-outlined" aria-hidden="true">error</span>
-      <span id="error-msg"></span>
-    </div>
-
-    <div id="login-section">
-      <button type="button" onclick="signInWithGoogle()" class="google-btn">
-        <svg class="google-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-        </svg>
-        Google ile devam et
-      </button>
-    </div>
-
-    <div id="loading-section" class="login-loading" hidden>
-      <div class="login-spinner" aria-label="Yükleniyor"></div>
-      <p class="text-muted" style="font-size: 13px; margin: 0;">Doğrulanıyor…</p>
-    </div>
-
-    <p class="login-foot">Erişim sorunu? <a href="mailto:support@orbisastro.online">Destek</a></p>
-  </main>
-  <p class="login-meta">v 1.0 · build 2026.06.23</p>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet" />
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/tokens.css') }}?v=20260624-2" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/base.css') }}?v=20260624-2" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/login.css') }}?v=20260624-2" />
+</head>
+<body class="login-body">
+  <div class="orbis-orb orbis-orb--1" aria-hidden="true"></div>
+  <div class="orbis-orb orbis-orb--2" aria-hidden="true"></div>
+  <div class="orbis-orb orbis-orb--3" aria-hidden="true"></div>
+  <div class="orbis-orb orbis-orb--4" aria-hidden="true"></div>
+
+  <div class="login-shell">
+    <a href="#login-card" class="skip-link">İçeriğe geç</a>
+    <main id="login-card" class="login-card" role="main">
+      <div class="login-brand">
+        <span class="login-brand-mark" aria-hidden="true">
+          <span class="material-symbols-outlined">all_inclusive</span>
+        </span>
+        <div>
+          <div class="login-brand-name">ORBIS</div>
+          <div class="login-brand-sub">Admin Panel</div>
+        </div>
+      </div>
+
+      <header class="login-head">
+        <h1 class="login-title">Yönetici Girişi</h1>
+        <p class="login-subtitle">Google hesabınızla devam edin</p>
+      </header>
+
+      <div id="error" class="login-alert" role="alert" hidden>
+        <span class="material-symbols-outlined" aria-hidden="true">error</span>
+        <span id="error-msg"></span>
+      </div>
+
+      <div id="login-section" class="stack-4">
+        <button class="btn btn--primary btn--lg google-btn" type="button" onclick="signInWithGoogle()">
+          <svg class="google-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          Google ile Giriş Yap
+        </button>
+      </div>
+
+      <div id="loading-section" hidden>
+        <div class="login-spinner" aria-label="Yükleniyor"></div>
+        <p class="login-loading-text">Doğrulanıyor…</p>
+      </div>
+
+      <p class="login-foot">Erişim sorunu? <a href="mailto:support@orbisastro.online">Destek</a></p>
+    </main>
+
+    <p class="login-meta">
+      <span class="login-meta-key">v</span> 1.0 · <span class="login-meta-key">build</span> 2026.06.24
+    </p>
+  </div>
 
   <script>
     const firebaseConfig = {
@@ -231,16 +87,20 @@
       storageBucket: "orbis-ffa9e.firebasestorage.app",
       messagingSenderId: "768649602152",
       appId: "1:768649602152:web:d1cd9f7deadcdfef1907dd",
+      measurementId: "G-V3FBQWDN61",
     };
+
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
     function showError(msg) {
-      const b = document.getElementById('error');
+      const box = document.getElementById('error');
       document.getElementById('error-msg').textContent = msg;
-      b.hidden = false;
+      box.hidden = false;
     }
-    function clearError() { document.getElementById('error').hidden = true; }
+    function clearError() {
+      document.getElementById('error').hidden = true;
+    }
 
     async function signInWithGoogle() {
       const loginSection = document.getElementById('login-section');
@@ -256,29 +116,34 @@
 
         const result = await auth.signInWithPopup(provider);
         const user = result.user;
+
         const idToken = await user.getIdToken();
 
         const response = await fetch('{{ url_for("admin.verify_admin") }}', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idToken, email: user.email, uid: user.uid }),
+          body: JSON.stringify({
+            idToken: idToken,
+            email: user.email,
+            uid: user.uid,
+          }),
         });
+
         const data = await response.json();
+
         if (data.success) {
           window.location.href = data.redirect;
         } else {
           throw new Error(data.message || 'Yetkilendirme başarısız');
         }
-      } catch (err) {
-        console.error('Login error:', err);
+      } catch (error) {
+        console.error('Login error:', error);
         loginSection.hidden = false;
         loadingSection.hidden = true;
-        showError(err.message || 'Giriş yapılırken bir hata oluştu');
+        showError(error.message || 'Giriş yapılırken bir hata oluştu');
         try { await auth.signOut(); } catch (e) {}
       }
     }
   </script>
-
-  <script src="{{ url_for('static', filename='js/admin/theme.js') }}?v=20260624" defer></script>
 </body>
 </html>

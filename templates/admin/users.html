@@ -1,113 +1,248 @@
 {% extends "admin/layout.html" %}
 {% block title %}Kullanıcılar{% endblock %}
 {% block page_title %}Kullanıcılar{% endblock %}
-{% block page_subtitle %}Tüm kullanıcıları görüntüle ve yönet{% endblock %}
-
-{% block page_actions %}
-<div class="row" style="gap: var(--space-2);">
-  <div class="input-group" style="width: 280px;">
-    <span class="input-group-icon material-symbols-outlined">search</span>
-    <input id="user-search" class="input" type="search" placeholder="E-posta veya ad…" />
-  </div>
-  <select id="user-filter" class="select" style="width: auto; min-width: 120px;">
-    <option value="all">Tümü</option>
-    <option value="premium">Premium</option>
-    <option value="free">Ücretsiz</option>
-  </select>
-</div>
-{% endblock %}
+{% block page_subtitle %}Tüm kullanıcıları görüntüle, filtrele ve yönet{% endblock %}
 
 {% block content %}
-<div class="card">
-  <div class="table-wrap" style="border: 0; border-radius: 0;">
-    <table class="table" id="users-table">
-      <thead>
-        <tr>
-          <th>Kullanıcı</th>
-          <th>E-posta</th>
-          <th style="text-align: center;">Durum</th>
-          <th style="text-align: right;">Kredi</th>
-          <th style="text-align: right;">Analiz</th>
-          <th style="text-align: right;">Kayıt</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="users-tbody">
-        <tr><td colspan="7" style="text-align: center; padding: 60px 0; color: var(--ink-faint);">Yükleniyor…</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <div class="card-foot">
-    <span id="user-count" style="font-size: 13px;">0 kullanıcı</span>
-    <div class="row" style="gap: var(--space-2);">
-      <button type="button" id="prev-page" class="btn btn--secondary btn--sm" disabled>← Önceki</button>
-      <button type="button" id="next-page" class="btn btn--secondary btn--sm">Sonraki →</button>
+<!-- ═══ Filter Bar ═══ -->
+<div class="card stagger" style="margin-bottom: var(--space-5);">
+  <div class="card-body">
+    <div class="row row--wrap" style="gap: var(--space-3);">
+      <div class="input-group" style="flex: 1; min-width: 240px;">
+        <span class="input-group-icon material-symbols-outlined">search</span>
+        <input id="user-search" class="input" type="search" placeholder="E-posta veya ad ile ara…" />
+      </div>
+
+      <div class="row" role="tablist" aria-label="Kullanıcı filtresi" style="gap: var(--space-2);">
+        <button class="target-option is-active" data-filter="all" type="button">
+          <span class="material-symbols-outlined" style="font-size: 18px;">groups</span>
+          <span>Tümü</span>
+        </button>
+        <button class="target-option" data-filter="premium" type="button">
+          <span class="material-symbols-outlined" style="font-size: 18px;">workspace_premium</span>
+          <span>Premium</span>
+        </button>
+        <button class="target-option" data-filter="free" type="button">
+          <span class="material-symbols-outlined" style="font-size: 18px;">person</span>
+          <span>Ücretsiz</span>
+        </button>
+        <button class="target-option" data-filter="admin" type="button">
+          <span class="material-symbols-outlined" style="font-size: 18px;">shield_person</span>
+          <span>Admin</span>
+        </button>
+      </div>
     </div>
+  </div>
+</div>
+
+<!-- ═══ Users Table ═══ -->
+<div class="table-wrap stagger">
+  <table class="table" id="users-table">
+    <thead>
+      <tr>
+        <th>Kullanıcı</th>
+        <th>E-posta</th>
+        <th>Durum</th>
+        <th class="num">Kredi</th>
+        <th>Son görülme</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="users-tbody">
+      <tr><td colspan="6">
+        <div class="empty" style="padding: var(--space-10) 0;">
+          <div class="empty-icon"><span class="material-symbols-outlined">hourglass_empty</span></div>
+          <div class="empty-title">Yükleniyor…</div>
+        </div>
+      </td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══ Edit Modal ═══ -->
+<div id="edit-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-label="Kullanıcı düzenle" hidden>
+  <div class="modal">
+    <header class="modal-head">
+      <h2 class="modal-title">Kullanıcı Düzenle</h2>
+      <button class="icon-btn icon-btn--ghost" type="button" data-close-modal aria-label="Kapat">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </header>
+    <div class="modal-body">
+      <input type="hidden" id="edit-user-id" />
+      <div class="stack-4">
+        <label class="row" style="gap: var(--space-2); padding: var(--space-3) var(--space-4); background: var(--primary-soft); border-radius: var(--radius-md); cursor: pointer;">
+          <input type="checkbox" id="edit-premium" />
+          <span style="font-size: 14px; font-weight: 500; color: var(--ink);">Premium aktif</span>
+        </label>
+        <div id="premium-options" class="stack-4" hidden>
+          <div>
+            <label for="edit-package">Paket</label>
+            <select id="edit-package" class="select">
+              <option value="astro_premium_monthly">Aylık</option>
+              <option value="astro_premium_yearly">Yıllık</option>
+              <option value="astro_premium_lifetime">Ömür Boyu</option>
+              <option value="admin_grant">Admin Grant</option>
+            </select>
+          </div>
+          <div>
+            <label for="edit-months">Süre (Ay)</label>
+            <input type="number" id="edit-months" class="input" min="1" max="120" value="1" />
+          </div>
+        </div>
+        <div>
+          <label for="credit-action">Kredi İşlemi</label>
+          <select id="credit-action" class="select">
+            <option value="add">Ekle</option>
+            <option value="remove">Çıkar</option>
+          </select>
+        </div>
+        <div>
+          <label for="credit-amount">Miktar</label>
+          <input type="number" id="credit-amount" class="input" min="0" value="0" />
+        </div>
+      </div>
+    </div>
+    <footer class="modal-foot">
+      <button class="btn btn--ghost" type="button" data-close-modal>İptal</button>
+      <button class="btn btn--primary" type="button" id="save-user">
+        <span class="material-symbols-outlined">save</span>
+        Kaydet
+      </button>
+    </footer>
   </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-let currentOffset = 0;
-const LIMIT = 50;
+  let allUsers = [];
+  let currentFilter = 'all';
+  let searchQuery = '';
 
-async function loadUsers() {
-  const search = document.getElementById('user-search').value.trim();
-  const filter = document.getElementById('user-filter').value;
-  const params = new URLSearchParams({ limit: LIMIT, offset: currentOffset, filter });
-  if (search) params.set('search', search);
+  function escapeHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
 
-  try {
-    const r = await fetch('/admin/api/users?' + params.toString(), { credentials: 'same-origin' });
-    const j = await r.json();
-    if (!j.success) throw new Error(j.message);
+  async function loadUsers() {
+    try {
+      const res = await fetch('/admin/api/users?limit=200', { credentials: 'same-origin' });
+      if (!res.ok) return;
+      const json = await res.json();
+      allUsers = (json.data && json.data.users) || json.users || json.data || [];
+      renderUsers();
+    } catch (e) { console.warn('[admin] loadUsers failed', e); }
+  }
 
+  function renderUsers() {
     const tbody = document.getElementById('users-tbody');
-    const users = j.data.users || [];
-    document.getElementById('user-count').textContent = (j.data.total || 0) + ' kullanıcı';
-
-    if (!users.length) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 60px 0; color: var(--ink-faint);">Kullanıcı bulunamadı</td></tr>';
+    if (!tbody) return;
+    let filtered = allUsers.slice();
+    if (currentFilter === 'premium') filtered = filtered.filter(u => u.isPremium);
+    else if (currentFilter === 'free') filtered = filtered.filter(u => !u.isPremium && !u.isAdmin);
+    else if (currentFilter === 'admin') filtered = filtered.filter(u => u.isAdmin);
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(u => (u.email || '').toLowerCase().includes(q) || (u.displayName || u.name || '').toLowerCase().includes(q));
+    }
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty" style="padding: var(--space-10) 0;">' +
+        '<div class="empty-icon"><span class="material-symbols-outlined">search_off</span></div>' +
+        '<div class="empty-title">Eşleşen kullanıcı yok</div>' +
+        '<div class="empty-desc">Farklı bir filtre veya arama terimi deneyin.</div>' +
+        '</div></td></tr>';
       return;
     }
-
-    tbody.innerHTML = users.map(u => `
-      <tr onclick="window.location='/admin/users/${escapeHtml(u.id)}'" style="cursor: pointer;">
-        <td>
-          <div class="row" style="gap: var(--space-2);">
-            <img src="${escapeHtml(u.photoURL || '')}" alt="" onerror="this.outerHTML='<div class=sidebar-avatar style=width:28px;height:28px;><span class=material-symbols-outlined style=font-size:16px;>person</span></div>'"
-                 style="width: 28px; height: 28px; border-radius: 50%; background: var(--surface-2); object-fit: cover;" />
-            <span style="font-weight: var(--fw-medium);">${escapeHtml(u.displayName || '—')}</span>
-          </div>
-        </td>
-        <td class="table-cell-muted">${escapeHtml(u.email || '—')}</td>
-        <td style="text-align: center;">${u.isPremium ? '<span class="badge badge--dot badge--success">Premium</span>' : '<span class="badge badge--neutral">Free</span>'}</td>
-        <td class="numeric">${u.credits != null ? u.credits : '0'}</td>
-        <td class="numeric">${u.totalAnalyses != null ? u.totalAnalyses : '0'}</td>
-        <td class="table-cell-muted numeric">${u.createdAt ? new Date(u.createdAt).toLocaleDateString('tr-TR') : '—'}</td>
-        <td style="text-align: right;"><span class="material-symbols-outlined text-muted" style="font-size: 18px;">chevron_right</span></td>
-      </tr>
-    `).join('');
-
-    document.getElementById('prev-page').disabled = currentOffset <= 0;
-    document.getElementById('next-page').disabled = (currentOffset + LIMIT) >= (j.data.total || 0);
-  } catch (err) {
-    console.error('Load users error:', err);
-    document.getElementById('users-tbody').innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 60px 0; color: var(--danger);">Yükleme hatası</td></tr>';
+    tbody.innerHTML = filtered.map(u => {
+      const status = u.isPremium
+        ? '<span class="badge badge--dot badge--success">Premium</span>'
+        : u.isAdmin
+          ? '<span class="badge badge--dot badge--primary">Admin</span>'
+          : '<span class="badge">Ücretsiz</span>';
+      const initial = (u.displayName || u.name || u.email || '?').charAt(0).toUpperCase();
+      return '<tr>' +
+        '<td><div class="row" style="gap: var(--space-3);">' +
+          '<div class="sidebar-avatar" style="width: 32px; height: 32px; font-size: 12px;">' + escapeHtml(initial) + '</div>' +
+          '<span style="font-weight: 500;">' + escapeHtml(u.displayName || u.name || '—') + '</span>' +
+        '</div></td>' +
+        '<td style="color: var(--ink-muted);">' + escapeHtml(u.email || '—') + '</td>' +
+        '<td>' + status + '</td>' +
+        '<td class="num">' + formatNumber(u.credits || 0) + '</td>' +
+        '<td style="color: var(--ink-muted); font-size: 12px;">' + formatDate(u.lastSeen || u.lastLogin) + '</td>' +
+        '<td style="text-align: right;"><button class="btn btn--ghost btn--sm" data-edit="' + escapeHtml(u.id || u.uid) + '">' +
+          '<span class="material-symbols-outlined" style="font-size: 16px;">edit</span> Düzenle' +
+        '</button></td>' +
+      '</tr>';
+    }).join('');
   }
-}
 
-document.getElementById('user-search').addEventListener('input', () => { currentOffset = 0; loadUsers(); });
-document.getElementById('user-filter').addEventListener('change', () => { currentOffset = 0; loadUsers(); });
-document.getElementById('prev-page').addEventListener('click', () => { currentOffset = Math.max(0, currentOffset - LIMIT); loadUsers(); });
-document.getElementById('next-page').addEventListener('click', () => { currentOffset += LIMIT; loadUsers(); });
+  function openEditModal(userId) {
+    const u = allUsers.find(x => (x.id || x.uid) === userId);
+    if (!u) return;
+    document.getElementById('edit-user-id').value = userId;
+    document.getElementById('edit-premium').checked = !!u.isPremium;
+    document.getElementById('edit-months').value = 1;
+    document.getElementById('credit-amount').value = 0;
+    document.getElementById('premium-options').hidden = !u.isPremium;
+    const modal = document.getElementById('edit-modal');
+    if (modal) modal.hidden = false;
+  }
 
-document.addEventListener('DOMContentLoaded', loadUsers);
+  function closeEditModal() {
+    const modal = document.getElementById('edit-modal');
+    if (modal) modal.hidden = true;
+  }
 
-function escapeHtml(s) {
-  if (s == null) return '';
-  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
+  async function saveUserChanges() {
+    const userId = document.getElementById('edit-user-id').value;
+    const isPremium = document.getElementById('edit-premium').checked;
+    const packageId = document.getElementById('edit-package').value;
+    const months = parseInt(document.getElementById('edit-months').value) || 1;
+    const creditAction = document.getElementById('credit-action').value;
+    const creditAmount = parseInt(document.getElementById('credit-amount').value) || 0;
+    try {
+      const premiumRes = await fetch('/admin/api/users/' + encodeURIComponent(userId) + '/premium', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ isPremium, packageId, months })
+      });
+      if (creditAmount > 0) {
+        await fetch('/admin/api/users/' + encodeURIComponent(userId) + '/credits', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+          body: JSON.stringify({ action: creditAction, amount: creditAmount })
+        });
+      }
+      if (premiumRes.ok) { showToast('Kullanıcı güncellendi', 'success'); closeEditModal(); loadUsers(); }
+      else { showToast('Güncelleme başarısız', 'error'); }
+    } catch (e) { console.error('Save error:', e); showToast('Güncelleme başarısız', 'error'); }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('user-search')?.addEventListener('input', function (e) { searchQuery = e.target.value || ''; renderUsers(); });
+    document.querySelectorAll('[data-filter]').forEach(btn => {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('is-active'));
+        btn.classList.add('is-active');
+        currentFilter = btn.getAttribute('data-filter');
+        renderUsers();
+      });
+    });
+    document.getElementById('save-user')?.addEventListener('click', saveUserChanges);
+    document.getElementById('edit-premium')?.addEventListener('change', function (e) {
+      document.getElementById('premium-options').hidden = !e.target.checked;
+    });
+    document.querySelectorAll('[data-close-modal]').forEach(function (el) { el.addEventListener('click', closeEditModal); });
+    document.getElementById('users-tbody')?.addEventListener('click', function (e) {
+      const btn = e.target.closest('[data-edit]');
+      if (btn) openEditModal(btn.getAttribute('data-edit'));
+    });
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('filter')) {
+      const f = urlParams.get('filter');
+      currentFilter = f;
+      document.querySelectorAll('[data-filter]').forEach(b => b.classList.toggle('is-active', b.getAttribute('data-filter') === f));
+    }
+    loadUsers();
+  });
 </script>
 {% endblock %}

@@ -36,7 +36,11 @@ class FirebaseService:
     def _init_firebase(self):
         """Firebase Admin SDK'yı başlat"""
         self.db = None  # Önce None olarak başlat
-        
+
+        # GCP Regional Access Boundary kontrolünü devre dışı bırak
+        # (bazı GCP organizasyonlarında FAILED_PRECONDITION hatası veriyor)
+        os.environ.setdefault('FIRESTORE_ACCESS_BOUNDARY_DISABLED', 'true')
+
         try:
             # Credential dosyası yolu
             cred_path = os.environ.get('FIREBASE_CREDENTIALS_PATH')

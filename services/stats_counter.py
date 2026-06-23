@@ -108,7 +108,7 @@ class StatsCounter:
         try:
             # Bugunku aktif kullanicilari say (select projection ile)
             result = self.db.collection("users").where(
-                "dailyUsage.date", "==", today
+                filter=("dailyUsage.date", "==", today)
             ).count().get()
             count = result[0][0].value
             self._set_active_today(count)
@@ -156,7 +156,7 @@ class StatsCounter:
             from datetime import datetime, timedelta, timezone
             cutoff = (datetime.now(timezone.utc) - timedelta(minutes=within_minutes)).isoformat()
             docs = list(self.db.collection("stats_heartbeats")
-                        .where("last_seen", ">=", cutoff)
+                        .where(filter=("last_seen", ">=", cutoff))
                         .stream())
             users = []
             for d in docs:
