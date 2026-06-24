@@ -2,6 +2,13 @@ import os
 import sys
 import logging
 
+# GCP Regional Access Boundary kontrolünü firebase_admin import'undan
+# ÖNCE devre dışı bırak. Bu, ana giriş noktasında set edilmesi gereken
+# erken bir ortam değişkenidir — runtime'da set etmek client init'i
+# için GEÇ kalır (Precondition check zaten çalışmış olur).
+os.environ.setdefault('FIRESTORE_ACCESS_BOUNDARY_DISABLED', 'true')
+os.environ.setdefault('GOOGLE_CLOUD_FIRESTORE_ACCESS_BOUNDARY_DISABLED', 'true')
+
 from flask import Flask, send_from_directory, jsonify
 import config
 from extensions import cors, init_extensions

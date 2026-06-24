@@ -314,9 +314,10 @@ def _strip_pub(p: str) -> str:
 
 
 def _extract_app_id(a: Dict[str, Any]) -> str:
-    """AdMob v1 API: appId direkt string ('ca-app-pub-...').
-    Eski format: nested object {'appId': {'value': '...'}}.
-    Farklı field adları da desteklenir: appCode, applicationCode, app_id.
+    """AdMob v1 API: appId direkt string ('ca-app-pub-...') veya
+    nested object {'appId': {'value': '...'}} olabilir.
+    Farklı field adları da desteklenir: appCode, applicationCode, app_id, id.
+    Ayrıca nested objede farklı key'ler: 'id', 'appId', 'value' kontrol edilir.
     """
     if not isinstance(a, dict):
         return ''
@@ -325,11 +326,13 @@ def _extract_app_id(a: Dict[str, Any]) -> str:
         if not app_id:
             continue
         if isinstance(app_id, dict):
-            v = app_id.get('value', '') or app_id.get('id', '')
-            if v:
-                return str(v)
+            # Nested object — birkaç olası field ismi
+            for nested_key in ('value', 'id', 'appId', 'app_id'):
+                v = app_id.get(nested_key, '')
+                if v:
+                    return str(v)
         else:
-            s = str(app_id)
+            s = str(app_id).strip()
             if s:
                 return s
     return ''
@@ -383,11 +386,10 @@ def get_apps(date_range: str = '30d') -> Optional[List[Dict[str, Any]]]:
         if not isinstance(a, dict):
             return False
         app_id = _extract_app_id(a)
-        name = (a.get('name', '') or '').strip()
-        if not app_id.startswith('ca-app-pub-'):
+        if not app_id or not app_id.startswith('ca-app-pub-'):
             return False
-        if not name or name.startswith('accounts/') or '/' in name:
-            return False
+        # appId geçerliyse app valid — name filtresi gevşetildi (AdMob bazen
+        # path-benzeri name döndürüyor olabilir; önemli olan appId).
         return True
     result = [
         {

@@ -2224,21 +2224,21 @@ super() }}
     let description = '';
 
     if ( type === 'ascendant' ) {
-      sign = '{{ astro_data.natal_planet_positions.Ascendant.sign if astro_data.natal_planet_positions.Ascendant else "" }}';
+      sign = (astroData && astroData.natal_planet_positions && astroData.natal_planet_positions.Ascendant) ? astroData.natal_planet_positions.Ascendant.sign : '';
       title = sign + ' Yükselen';
       subtitle = 'Dış görünüm ve ilk izlenim';
       icon = '↑';
       bgClass = 'bg-rose-500/20 text-rose-400';
       description = signDescriptions[sign]?.asc || 'Yükselen burcunuz, dış dünyanın sizi nasıl gördüğünü belirler.';
     } else if ( type === 'moon' ) {
-      sign = '{{ astro_data.natal_planet_positions.Moon.sign if astro_data.natal_planet_positions.Moon else "" }}';
+      sign = (astroData && astroData.natal_planet_positions && astroData.natal_planet_positions.Moon) ? astroData.natal_planet_positions.Moon.sign : '';
       title = sign + ' Ay';
       subtitle = 'Duygusal doğa ve iç dünya';
       icon = '☾';
       bgClass = 'bg-cyan-500/20 text-cyan-400';
       description = signDescriptions[sign]?.moon || 'Ay burcunuz, duygusal doğanızı temsil eder.';
     } else if ( type === 'mc' ) {
-      sign = '{{ astro_data.natal_planet_positions.MC.sign if astro_data.natal_planet_positions.MC else "" }}';
+      sign = (astroData && astroData.natal_planet_positions && astroData.natal_planet_positions.MC) ? astroData.natal_planet_positions.MC.sign : '';
       title = sign + ' MC';
       subtitle = 'Kariyer ve toplumsal imaj';
       icon = '★';
@@ -2270,14 +2270,14 @@ super() }}
     let description = '';
 
     if ( type === 'vedic' ) {
-      const dasaLord = '{{ astro_data.vimshottari_dasa.main_dasa_lord_tr.split(" ")[0] if astro_data.vimshottari_dasa and astro_data.vimshottari_dasa.main_dasa_lord_tr else "" }}';
+      const dasaLord = (astroData && astroData.vimshottari_dasa && astroData.vimshottari_dasa.main_dasa_lord_tr) ? astroData.vimshottari_dasa.main_dasa_lord_tr.split(' ')[0] : '';
       title = dasaLord + ' Dasa Dönemi';
       subtitle = 'Vimshottari Dasa Sistemi';
       icon = '🕉️';
       bgClass = 'bg-orange-500/20 text-orange-400';
       description = dasaDescriptions[dasaLord] || 'Vedik astrolojinin 120 yıllık gezegen döngüsü. Her gezegen belirli bir süre hayatınızı yönetir.';
     } else if ( type === 'firdaria' ) {
-      const firdariaLord = '{{ astro_data.firdaria_periods.main_ruler if astro_data.firdaria_periods and astro_data.firdaria_periods.main_ruler else "" }}';
+      const firdariaLord = (astroData && astroData.firdaria_periods && astroData.firdaria_periods.main_ruler) ? astroData.firdaria_periods.main_ruler : '';
       title = firdariaLord + ' Firdaria';
       subtitle = 'Ortaçağ Dönem Sistemi';
       icon = '⏳';
