@@ -3,12 +3,13 @@ ORBIS Firebase Service
 Push Notifications & Server-side Firestore işlemleri
 """
 
+import os
+
 # GCP Regional Access Boundary devre dışı — firebase_admin import'undan
 # ÖNCE set edilmeli, yoksa internal client init'te Precondition check devreye girer.
 os.environ.setdefault('FIRESTORE_ACCESS_BOUNDARY_DISABLED', 'true')
 os.environ.setdefault('GOOGLE_CLOUD_FIRESTORE_ACCESS_BOUNDARY_DISABLED', 'true')
 
-import os
 import json
 import logging
 import firebase_admin
