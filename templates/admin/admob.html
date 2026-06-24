@@ -1,0 +1,255 @@
+{% extends "admin/layout.html" %}
+{% block title %}ORBIS Admin · AdMob{% endblock %}
+{% block page_title %}AdMob Raporları{% endblock %}
+{% block page_subtitle %}Reklam geliri, impression, eCPM ve uygulama bazlı performans{% endblock %}
+
+{% block content %}
+{% if not admob_configured %}
+<section class="card stagger">
+  <div class="card-body" style="text-align: center; padding: var(--space-8);">
+    <span class="material-symbols-outlined" style="font-size: 48px; color: var(--ink-faint);">ads_click</span>
+    <h2 class="card-title" style="margin-top: var(--space-3);">AdMob OAuth yapılandırılmamış</h2>
+    <p class="text-ink-faint" style="max-width: 480px; margin: var(--space-2) auto var(--space-4);">
+      Sunucu tarafı raporları için şu ortam değişkenleri gerekli:
+      <code>ADMOB_CLIENT_ID</code>, <code>ADMOB_CLIENT_SECRET</code>,
+      <code>ADMOB_REFRESH_TOKEN</code>, <code>ADMOB_PUBLISHER_ID</code>.
+    </p>
+    <p class="text-ink-faint" style="font-size: 12px;">
+      AdMob API'yi Google Cloud Console'dan enable etmeyi unutma:
+      <code>console.developers.google.com/apis/api/admob.googleapis.com</code>
+    </p>
+  </div>
+</section>
+{% else %}
+
+<div class="row row--between" style="margin: var(--space-4) 0;">
+  <div>
+    <h2 style="font-size: 14px; font-weight: 600; color: var(--ink); margin: 0;">Zaman aralığı</h2>
+    <p class="text-ink-faint" style="font-size: 12px; margin: 2px 0 0;">AdMob data 24 saat gecikmeli olabilir</p>
+  </div>
+  <div class="period" role="tablist" aria-label="Zaman aralığı" id="admob-period">
+    <button class="period-option" data-range="7d" type="button">7g</button>
+    <button class="period-option is-active" data-range="30d" type="button">30g</button>
+    <button class="period-option" data-range="90d" type="button">90g</button>
+  </div>
+</div>
+
+<div class="grid grid--kpi stagger">
+  <div class="metric">
+    <div class="metric-head">
+      <span class="metric-label">Toplam Gelir</span>
+      <span class="metric-icon metric-icon--success"><span class="material-symbols-outlined">payments</span></span>
+    </div>
+    <div class="metric-value tabular" id="admob-total-revenue">—</div>
+    <div class="metric-foot">
+      <span class="metric-compare" id="admob-total-revenue-range">seçili aralık</span>
+    </div>
+  </div>
+  <div class="metric">
+    <div class="metric-head">
+      <span class="metric-label">Toplam Impression</span>
+      <span class="metric-icon metric-icon--primary"><span class="material-symbols-outlined">visibility</span></span>
+    </div>
+    <div class="metric-value tabular" id="admob-total-impressions">—</div>
+    <div class="metric-foot">
+      <span class="metric-compare">seçili aralık</span>
+    </div>
+  </div>
+  <div class="metric">
+    <div class="metric-head">
+      <span class="metric-label">RPM (eCPM)</span>
+      <span class="metric-icon metric-icon--info"><span class="material-symbols-outlined">analytics</span></span>
+    </div>
+    <div class="metric-value tabular" id="admob-total-ecpm">—</div>
+    <div class="metric-foot">
+      <span class="metric-compare">1000 impression başına</span>
+    </div>
+  </div>
+  <div class="metric">
+    <div class="metric-head">
+      <span class="metric-label">Son Gün Gelir</span>
+      <span class="metric-icon metric-icon--warning"><span class="material-symbols-outlined">today</span></span>
+    </div>
+    <div class="metric-value tabular" id="admob-last-revenue">—</div>
+    <div class="metric-foot">
+      <span class="metric-compare" id="admob-last-revenue-date">son veri</span>
+    </div>
+  </div>
+</div>
+
+<section class="card stagger" style="margin-top: var(--space-5);">
+  <header class="card-head">
+    <div>
+      <h2 class="card-title">Günlük gelir</h2>
+      <p class="card-subtitle">USD bazında günlük AdMob kazancı</p>
+    </div>
+    <span class="badge badge--dot badge--success">AdMob</span>
+  </header>
+  <div class="card-body">
+    <div class="chart" id="admob-revenue-chart" data-chart='{"type":"line","label":"Gelir (USD)","series":[{"name":"USD","values":[],"color":"success"}],"xLabels":[]}'></div>
+  </div>
+</section>
+
+<div class="grid grid--12 stagger" style="margin-top: var(--space-5);">
+  <section class="card col-span-7">
+    <header class="card-head">
+      <div>
+        <h2 class="card-title">Günlük detay</h2>
+        <p class="card-subtitle">Tarih, gelir, impression, RPM</p>
+      </div>
+    </header>
+    <div class="card-body" style="padding: 0;">
+      <div class="table-wrap">
+        <table class="table" id="admob-daily-table">
+          <thead>
+            <tr>
+              <th>Tarih</th>
+              <th class="text-right">Gelir (USD)</th>
+              <th class="text-right">Impression</th>
+              <th class="text-right">RPM (USD)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="4" class="text-muted" style="text-align: center; padding: var(--space-5);">Yükleniyor…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="card col-span-5">
+    <header class="card-head">
+      <div>
+        <h2 class="card-title">Uygulamalar</h2>
+        <p class="card-subtitle">AdMob hesabına bağlı uygulamalar</p>
+      </div>
+    </header>
+    <div class="card-body" id="admob-apps-list">
+      <div class="empty-state"><span class="material-symbols-outlined">apps</span><div>Yükleniyor…</div></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  const fmtUSD = (v) => '$' + Number(v || 0).toFixed(2);
+  const fmtInt = (v) => Number(v || 0).toLocaleString('en-US');
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  let currentRange = '30d';
+
+  function setActive(range) {
+    document.querySelectorAll('#admob-period .period-option').forEach((el) => {
+      el.classList.toggle('is-active', el.getAttribute('data-range') === range);
+    });
+  }
+
+  async function loadOverview() {
+    setActive(currentRange);
+    const r = await fetch('/admin/api/admob/overview?range=' + currentRange, { credentials: 'same-origin' });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      showError(err.message || 'AdMob verisi alınamadı');
+      return;
+    }
+    const j = await r.json();
+    if (!j.success || !j.data) { showError('Veri yok'); return; }
+    renderOverview(j.data);
+  }
+
+  function renderOverview(d) {
+    document.getElementById('admob-total-revenue').textContent = fmtUSD(d.revenue_usd);
+    document.getElementById('admob-total-revenue-range').textContent =
+      d.range === '7d' ? 'son 7 gün' : d.range === '30d' ? 'son 30 gün' : 'son 90 gün';
+    document.getElementById('admob-total-impressions').textContent = fmtInt(d.impressions);
+    document.getElementById('admob-total-ecpm').textContent = fmtUSD(d.ecpm_usd);
+
+    const rows = d.rows || [];
+    const last = rows[rows.length - 1];
+    if (last) {
+      document.getElementById('admob-last-revenue').textContent = fmtUSD(last.revenue_usd);
+      document.getElementById('admob-last-revenue-date').textContent = last.date || 'son veri';
+    } else {
+      document.getElementById('admob-last-revenue').textContent = '$0.00';
+      document.getElementById('admob-last-revenue-date').textContent = 'veri yok';
+    }
+
+    // Daily table
+    const tbody = document.querySelector('#admob-daily-table tbody');
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="text-muted" style="text-align: center; padding: var(--space-5);">Bu aralıkta veri yok</td></tr>';
+    } else {
+      tbody.innerHTML = rows.slice().reverse().map((r) => {
+        const imp = Number(r.impressions || 0);
+        const rev = Number(r.revenue_usd || 0);
+        const rpm = imp ? (rev / imp * 1000) : 0;
+        return '<tr>' +
+          '<td>' + esc(r.date || '—') + '</td>' +
+          '<td class="text-right tabular">' + fmtUSD(rev) + '</td>' +
+          '<td class="text-right tabular">' + fmtInt(imp) + '</td>' +
+          '<td class="text-right tabular">' + fmtUSD(rpm) + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    // Revenue chart
+    const values = rows.map((r) => Number(r.revenue_usd || 0));
+    const labels = rows.map((r) => (r.date || '').slice(0));
+    const el = document.getElementById('admob-revenue-chart');
+    el.setAttribute('data-chart', JSON.stringify({
+      type: 'line', label: 'Gelir (USD)',
+      series: [{ name: 'USD', values: values, color: 'success' }],
+      xLabels: labels,
+    }));
+    if (window.OrbisCharts && window.OrbisCharts.lineChart) {
+      window.OrbisCharts.lineChart(el, [{ name: 'USD', values: values, color: 'success' }], { height: 240, label: 'Gelir (USD)' });
+    }
+  }
+
+  async function loadApps() {
+    const r = await fetch('/admin/api/admob/apps', { credentials: 'same-origin' });
+    const target = document.getElementById('admob-apps-list');
+    if (!r.ok) {
+      target.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">error</span><div>Uygulamalar alınamadı</div></div>';
+      return;
+    }
+    const j = await r.json();
+    if (!j.success || !Array.isArray(j.data) || !j.data.length) {
+      target.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">apps</span><div>AdMob hesabında uygulama bulunamadı</div></div>';
+      return;
+    }
+    target.innerHTML = j.data.map((a) =>
+      '<div class="list-row">' +
+        '<div class="metric-icon" style="background: var(--primary-soft); color: var(--primary);"><span class="material-symbols-outlined">phone_android</span></div>' +
+        '<div style="flex: 1; min-width: 0;">' +
+          '<div style="font-weight: 600; font-size: 14px;">' + esc(a.name || '—') + '</div>' +
+          '<div class="text-muted" style="font-family: var(--font-mono); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + esc(a.appId || '') + '</div>' +
+        '</div>' +
+        '<span class="badge">' + esc(a.platform || '') + '</span>' +
+      '</div>'
+    ).join('');
+  }
+
+  function showError(msg) {
+    ['admob-total-revenue', 'admob-total-impressions', 'admob-total-ecpm', 'admob-last-revenue']
+      .forEach((id) => { document.getElementById(id).textContent = '—'; });
+    document.querySelector('#admob-daily-table tbody').innerHTML =
+      '<tr><td colspan="4" class="text-muted" style="text-align: center; padding: var(--space-5);">' + esc(msg) + '</td></tr>';
+  }
+
+  document.querySelectorAll('#admob-period .period-option').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      currentRange = btn.getAttribute('data-range');
+      loadOverview();
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    setActive(currentRange);
+    loadOverview();
+    loadApps();
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

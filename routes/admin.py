@@ -183,6 +183,15 @@ def ai_settings():
     return render_template('admin/ai_settings.html')
 
 
+@admin_bp.route('/admob')
+@admin_required
+def admob_page():
+    """AdMob raporları sayfası — gelir, impressions, eCPM, uygulama bazlı performans."""
+    from services.admob import _get_config
+    configured = _get_config() is not None
+    return render_template('admin/admob.html', admob_configured=configured)
+
+
 @admin_bp.route('/stats')
 @admin_required
 def statistics():

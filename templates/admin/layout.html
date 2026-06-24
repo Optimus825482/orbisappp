@@ -87,6 +87,12 @@
                 <span class="sidebar-link-label">İstatistikler</span>
               </a>
             </li>
+            <li>
+              <a href="{{ url_for('admin.admob_page') }}" class="sidebar-link{% if request.endpoint == 'admin.admob_page' %} is-active{% endif %}" data-shortcut="g a">
+                <span class="sidebar-link-icon"><span class="material-symbols-outlined">ads_click</span></span>
+                <span class="sidebar-link-label">AdMob</span>
+              </a>
+            </li>
           </ul>
         </div>
 
