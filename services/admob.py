@@ -3,6 +3,8 @@ ORBIS Google AdMob API wrapper.
 Server-side reklam raporlarını çek (admin dashboard için).
 OAuth2: refresh_token + client_id + client_secret.
 Fail-closed: credential yoksa None.
+Fail-quiet: 403 (API disabled) / 401 (invalid token) gibi terminal hatalarda
+uzun süre (12 saat) tekrar denemeyi durdurur.
 """
 import os
 import json
@@ -19,6 +21,23 @@ _cache: Dict[str, tuple] = {}
 
 TOKEN_URL = 'https://oauth2.googleapis.com/token'
 ADMob_API = 'https://admob.googleapis.com/v1'
+
+# Terminal hata sonrası cooldown
+_FATAL_COOLDOWN = 12 * 3600  # 12 saat
+_fatal_until: float = 0.0
+_fatal_reason: str = ''
+
+
+def _is_in_cooldown() -> bool:
+    global _fatal_until
+    return _fatal_until and time.time() < _fatal_until
+
+
+def _mark_fatal(reason: str):
+    global _fatal_until, _fatal_reason
+    _fatal_until = time.time() + _FATAL_COOLDOWN
+    _fatal_reason = reason
+    logger.warning('[AdMob] entering %sh cooldown: %s', int(_FATAL_COOLDOWN/3600), reason)
 
 # AdMob 'DATE' dimension değeri "YYYYMMDD" → "23 Haz" gibi kısa Türkçe etiket
 _MONTHS_TR = ['', 'Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz',
@@ -63,6 +82,8 @@ def _cache_set(key: str, value, ttl: int = CACHE_TTL):
 
 
 def _get_access_token(cfg: Dict[str, str]) -> Optional[str]:
+    if _is_in_cooldown():
+        return None
     cache_key = 'access_token'
     cached = _cache_get(cache_key)
     if cached:
@@ -74,6 +95,13 @@ def _get_access_token(cfg: Dict[str, str]) -> Optional[str]:
             'refresh_token': cfg['refresh_token'],
             'grant_type': 'refresh_token',
         }, timeout=15)
+        if resp.status_code in (401, 403):
+            try:
+                err = resp.json().get('error_description') or resp.json().get('error') or ''
+            except Exception:
+                err = resp.text[:200]
+            _mark_fatal(f'auth HTTP {resp.status_code}: {err[:150]}')
+            return None
         resp.raise_for_status()
         token = resp.json().get('access_token')
         if token:
@@ -85,6 +113,8 @@ def _get_access_token(cfg: Dict[str, str]) -> Optional[str]:
 
 
 def _api_get(path: str, cfg: Dict[str, str], params: Optional[Dict] = None) -> Optional[Any]:
+    if _is_in_cooldown():
+        return None
     token = _get_access_token(cfg)
     if not token:
         return None
@@ -95,6 +125,9 @@ def _api_get(path: str, cfg: Dict[str, str], params: Optional[Dict] = None) -> O
             headers={'Authorization': f'Bearer {token}'},
             timeout=30,
         )
+        if resp.status_code in (401, 403):
+            _mark_fatal(f'API HTTP {resp.status_code} on GET {path}')
+            return None
         resp.raise_for_status()
         return resp.json()
     except Exception:
@@ -104,6 +137,8 @@ def _api_get(path: str, cfg: Dict[str, str], params: Optional[Dict] = None) -> O
 
 def _api_post(path: str, cfg: Dict[str, str], body: Dict) -> Optional[Any]:
     """AdMob report generate (POST + async polling)."""
+    if _is_in_cooldown():
+        return None
     token = _get_access_token(cfg)
     if not token:
         return None
@@ -116,6 +151,9 @@ def _api_post(path: str, cfg: Dict[str, str], body: Dict) -> Optional[Any]:
         )
         if resp.status_code in (200, 201):
             return resp.json()
+        if resp.status_code in (401, 403):
+            _mark_fatal(f'API HTTP {resp.status_code} on POST {path}')
+            return None
         logger.warning('[AdMob] generate HTTP %s: %s', resp.status_code, resp.text[:300])
         return None
     except Exception:
@@ -159,6 +197,15 @@ def get_overview(date_range: str = '30d') -> Optional[Dict[str, Any]]:
     cfg = _get_config()
     if not cfg:
         return None
+    if _is_in_cooldown():
+        return {
+            'range': date_range,
+            'revenue_usd': 0.0,
+            'impressions': 0,
+            'ecpm_usd': 0.0,
+            'rows': [],
+            'cooldown': True,
+        }
     cache_key = f'overview:{date_range}'
     cached = _cache_get(cache_key)
     if cached is not None:
