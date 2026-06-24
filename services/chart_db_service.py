@@ -18,6 +18,8 @@ import logging
 from datetime import datetime, date, time, timedelta
 from typing import Optional, Dict, Any, Tuple
 
+from google.cloud.firestore_v1.base_query import FieldFilter
+
 logger = logging.getLogger(__name__)
 
 
@@ -421,7 +423,7 @@ def cleanup_old_transits(days_old: int = 7) -> int:
     try:
         cutoff = (datetime.utcnow() - timedelta(days=days_old)).isoformat()
         collection = db.collection("daily_transits")
-        query = collection.where("_created_at", "<", cutoff).limit(100)
+        query = collection.where(filter=FieldFilter("_created_at", "<", cutoff)).limit(100)
         old_docs = query.stream()
 
         deleted = 0

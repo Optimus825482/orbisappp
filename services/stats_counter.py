@@ -8,6 +8,8 @@ import logging
 from datetime import datetime
 from typing import Optional
 
+from google.cloud.firestore_v1.base_query import FieldFilter
+
 logger = logging.getLogger(__name__)
 
 # Field yollari
@@ -108,7 +110,7 @@ class StatsCounter:
         try:
             # Bugunku aktif kullanicilari say (select projection ile)
             result = self.db.collection("users").where(
-                filter=("dailyUsage.date", "==", today)
+                filter=FieldFilter("dailyUsage.date", "==", today)
             ).count().get()
             count = result[0][0].value
             self._set_active_today(count)
@@ -156,7 +158,7 @@ class StatsCounter:
             from datetime import datetime, timedelta, timezone
             cutoff = (datetime.now(timezone.utc) - timedelta(minutes=within_minutes)).isoformat()
             docs = list(self.db.collection("stats_heartbeats")
-                        .where("last_seen", ">=", cutoff)
+                        .where(filter=FieldFilter("last_seen", ">=", cutoff))
                         .stream())
             users = []
             for d in docs:

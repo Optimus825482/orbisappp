@@ -3,6 +3,7 @@ import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import firebase_admin
 from firebase_admin import credentials, firestore
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 cred = credentials.Certificate(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                                             "orbis-ffa9e-firebase-adminsdk-fbsvc-b4ac1afabf.json"))
@@ -12,7 +13,7 @@ db = firestore.client()
 
 # Mevcut kullanicilardan sayilari hesapla
 total = db.collection('users').count().get()[0][0].value
-premium = db.collection('users').where('isPremium', '==', True).count().get()[0][0].value
+premium = db.collection('users').where(filter=FieldFilter('isPremium', '==', True)).count().get()[0][0].value
 
 all_users = list(db.collection('users').stream())
 total_credits = sum(u.to_dict().get('credits', 0) for u in all_users)
