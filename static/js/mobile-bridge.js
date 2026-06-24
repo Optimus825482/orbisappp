@@ -875,14 +875,56 @@ const OrbisBridge = {
 
     try {
       const { AdMob } = Capacitor.Plugins;
+      if (!AdMob) {
+        console.warn("[ORBIS] AdMob plugin yüklü değil — native tarafta @capacitor-community/admob kurulu olmalı");
+        return;
+      }
       const adConfig = this._getAdmob();
 
+      // ⚠️ KRİTİK: AdMob.initialize() zorunlu. Bu çağrılmadan prepare/show
+      // sessizce başarısız olur → AdMob panelinde "0 istek" gözükür.
+      // initializeForTesting:true → test reklam (NO_FILL) — production'da false olmalı.
       await AdMob.initialize({
         initializeForTesting: this.CONFIG.IS_TESTING,
-        testingDevices: [],
+        testingDevices: this.CONFIG.IS_TESTING ? [] : [],
+        // TR mevzuatı gereği çocuk yönelimli değiliz → false. Yanlışlıkla true
+        // yapılırsa AdMob tüm reklamları reddeder → 0 etkin kalır.
+        tagForChildDirectedTreatment: false,
+        tagForUnderAgeOfConsent: false,
       });
 
-      console.log("[ORBIS] AdMob başlatıldı");
+      console.log("[ORBIS] ✅ AdMob.initialize başarılı (appId=" + adConfig.APP_ID + ")");
+
+      // AppId sanity check
+      if (!adConfig.APP_ID || !adConfig.APP_ID.startsWith("ca-app-pub-")) {
+        console.error("[ORBIS] ❌ Geçersiz AdMob APP_ID:", adConfig.APP_ID);
+        return;
+      }
+
+      // iOS 14+ ATT (App Tracking Transparency) — ayrı method, Android silent
+      try {
+        if (typeof AdMob.trackingAuthorizationStatus === "function") {
+          const tracking = await AdMob.trackingAuthorizationStatus();
+          if (tracking?.status === "notDetermined" && typeof AdMob.requestTrackingAuthorization === "function") {
+            await AdMob.requestTrackingAuthorization();
+          }
+        }
+      } catch (e) {
+        // iOS dışı platform — silent ignore
+        console.log("[ORBIS] ATT atlandı (Android veya unsupported):", e?.message || "");
+      }
+
+      // GDPR/KVKK consent sorgula
+      try {
+        if (typeof AdMob.requestConsentInfo === "function") {
+          const consent = await AdMob.requestConsentInfo({});
+          console.log("[ORBIS] Consent status:", consent?.status);
+          this._adConsentStatus = consent?.status || "UNKNOWN";
+        }
+      } catch (e) {
+        console.log("[ORBIS] Consent info atlandı:", e?.message || e);
+        this._adConsentStatus = "UNKNOWN";
+      }
 
       // Reklamları önceden yükle
       await this.loadRewardedAd();
@@ -890,7 +932,7 @@ const OrbisBridge = {
 
       // Premium değilse banner göster
       if (!this.state.isPremium) {
-        this.showBanner();
+        await this.showBanner();
       }
     } catch (error) {
       console.error("[ORBIS] AdMob başlatma hatası:", error);

@@ -64,7 +64,7 @@ def create_app(test_config=None):
             mimetype="application/json",
         )
 
-    # app-ads.txt / ads.txt - AdMob + AdSense doğrulama (504 fix)
+    # app-ads.txt / ads.txt - AdMob reklam doğrulama (504 fix)
     # send_file() send_from_directory()'den daha hızlı çünkü ekstra os.path.isfile() lookup yapmaz
     @app.route("/app-ads.txt")
     def app_ads_txt():

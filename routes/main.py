@@ -54,19 +54,19 @@ def index():
 
 @bp.route("/hakkimizda")
 def about():
-    """Hakkımızda sayfası - AdSense onayı için public içerik"""
+    """Hakkımızda sayfası - SEO için public içerik"""
     return render_template("public/about.html")
 
 
 @bp.route("/iletisim")
 def contact():
-    """İletişim sayfası - AdSense onayı için public içerik"""
+    """İletişim sayfası - SEO için public içerik"""
     return render_template("public/contact.html")
 
 
 @bp.route("/blog")
 def blog_index():
-    """Blog ana sayfası - AdSense onayı için public içerik"""
+    """Blog ana sayfası - SEO için public içerik"""
     return render_template("public/blog/index.html")
 
 
@@ -82,13 +82,13 @@ def blog_post(slug):
 
 @bp.route("/nasil-calisir")
 def how_it_works():
-    """Nasıl çalışır sayfası - AdSense onayı için public içerik"""
+    """Nasıl çalışır sayfası - SEO için public içerik"""
     return render_template("public/how-it-works.html")
 
 
 @bp.route("/sss")
 def faq():
-    """Sıkça sorulan sorular - AdSense onayı için public içerik"""
+    """Sıkça sorulan sorular - SEO için public içerik"""
     return render_template("public/faq.html")
 
 

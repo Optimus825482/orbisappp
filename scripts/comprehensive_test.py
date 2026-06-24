@@ -255,7 +255,6 @@ test("Onboarding IAP fallback OrbisBridge'e", 'OrbisBridge.purchasePremium' in o
 # Landing page
 lp = open('orbis-landing/index.html').read()
 test("Landing page title", 'ORBIS' in lp)
-test("Landing page Google AdSense", 'adsbygoogle' in lp)
 test("Landing page Google Analytics", 'G-W61PWFWFMS' in lp)
 
 # PWA manifest

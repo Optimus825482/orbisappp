@@ -396,29 +396,6 @@ endblock %} {% block head %} {{ super() }}
   </div>
 </div>
 
-<!-- AdSense Banner (Web Only) -->
-<div id="adsense-banner-index" class="web-ads-only max-w-md mx-auto px-4 mt-8">
-  <ins
-    class="adsbygoogle"
-    style="display: block"
-    data-ad-client="ca-pub-2444093901783574"
-    data-ad-slot="auto"
-    data-ad-format="auto"
-    data-full-width-responsive="true"
-  ></ins>
-  <script>
-    if (
-      !window.Capacitor ||
-      !window.Capacitor.isNativePlatform ||
-      !window.Capacitor.isNativePlatform()
-    ) {
-      (adsbygoogle = window.adsbygoogle || []).push({});
-    } else {
-      document.getElementById("adsense-banner-index").style.display = "none";
-    }
-  </script>
-</div>
-
 <!-- Copyright Footer -->
 <footer class="mt-8 pb-6 text-center px-4">
   <!-- Sorumluluk Reddi -->

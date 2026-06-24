@@ -312,25 +312,6 @@ endblock %} {% block head %} {{ super() }}
   </div>
 </div>
 
-<!-- AdSense Banner (Web Only) -->
-<div id="adsense-banner-container" class="web-ads-only max-w-lg mx-auto px-4 mt-8">
-  <ins class="adsbygoogle" style="display: block" data-ad-client="ca-pub-2444093901783574" data-ad-slot="auto"
-    data-ad-format="auto" data-full-width-responsive="true"></ins>
-  <script>
-    // AdSense yalnızca web'de çalışır (Capacitor native değilse)
-    if (
-      !window.Capacitor ||
-      !window.Capacitor.isNativePlatform ||
-      !window.Capacitor.isNativePlatform()
-    ) {
-      ( adsbygoogle = window.adsbygoogle || [] ).push( {} );
-    } else {
-      // Native platformda gizle
-      document.getElementById( "adsense-banner-container" ).style.display =
-        "none";
-    }
-  </script>
-</div>
 
 <!-- Copyright Footer -->
 <footer class="mt-8 pb-6 text-center px-4">
