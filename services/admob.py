@@ -223,7 +223,7 @@ def get_overview(date_range: str = '30d') -> Optional[Dict[str, Any]]:
                 'startDate': {'year': start.year, 'month': start.month, 'day': start.day},
                 'endDate': {'year': end.year, 'month': end.month, 'day': end.day},
             },
-            'metrics': ['ESTIMATED_EARNINGS', 'IMPRESSIONS', 'IMPRESSION_CTR', 'OBSERVED_ECPM'],
+            'metrics': ['ESTIMATED_EARNINGS', 'IMPRESSIONS', 'IMPRESSION_CTR', 'IMPRESSION_RPM'],
             'dimensions': ['DATE'],
             'localizationSettings': {'currencyCode': 'USD', 'languageCode': 'en-US'},
         }
