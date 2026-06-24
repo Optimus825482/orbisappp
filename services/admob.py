@@ -33,6 +33,13 @@ def _is_in_cooldown() -> bool:
     return _fatal_until and time.time() < _fatal_until
 
 
+def _mark_short_cooldown(seconds: int, reason: str):
+    global _fatal_until, _fatal_reason
+    _fatal_until = time.time() + seconds
+    _fatal_reason = reason
+    logger.warning('[AdMob] entering %ss cooldown: %s', seconds, reason)
+
+
 def _mark_fatal(reason: str):
     global _fatal_until, _fatal_reason
     _fatal_until = time.time() + _FATAL_COOLDOWN
@@ -128,6 +135,9 @@ def _api_get(path: str, cfg: Dict[str, str], params: Optional[Dict] = None) -> O
         if resp.status_code in (401, 403):
             _mark_fatal(f'API HTTP {resp.status_code} on GET {path}')
             return None
+        if resp.status_code == 400:
+            _mark_short_cooldown(300, f'API HTTP 400 on GET {path}: {resp.text[:150]}')
+            return None
         resp.raise_for_status()
         return resp.json()
     except Exception:
@@ -153,6 +163,9 @@ def _api_post(path: str, cfg: Dict[str, str], body: Dict) -> Optional[Any]:
             return resp.json()
         if resp.status_code in (401, 403):
             _mark_fatal(f'API HTTP {resp.status_code} on POST {path}')
+            return None
+        if resp.status_code == 400:
+            _mark_short_cooldown(300, f'API HTTP 400 on POST {path}: {resp.text[:150]}')
             return None
         logger.warning('[AdMob] generate HTTP %s: %s', resp.status_code, resp.text[:300])
         return None
@@ -216,7 +229,7 @@ def get_overview(date_range: str = '30d') -> Optional[Dict[str, Any]]:
     end = datetime.date.today()
     start = end - datetime.timedelta(days=days)
 
-    account_id = _strip_pub(cfg['publisher_id'])
+    parent = cfg['publisher_id'] if cfg['publisher_id'].startswith('pub-') else f'pub-{_strip_pub(cfg["publisher_id"])}'
     spec = {
         'reportSpec': {
             'dateRange': {
@@ -230,7 +243,7 @@ def get_overview(date_range: str = '30d') -> Optional[Dict[str, Any]]:
     }
 
     data = _generate_and_poll(
-        f'/accounts/{account_id}/networkReport:generate',
+        f'/accounts/{parent}/networkReport:generate',
         spec, cfg, max_wait=45,
     )
     rows = []
