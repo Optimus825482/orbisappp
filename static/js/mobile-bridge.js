@@ -729,128 +729,38 @@ const OrbisBridge = {
   async requestAnalysis(onSuccess, onCancel) {
     console.log("[ORBIS] Analiz isteği başladı...");
 
-    // ⚠️ KRİTİK: Her analiz öncesi backend'den premium durumunu doğrula
-    // localStorage'da eski premium kalmış olabilir
-    if (this.state.isPremium) {
-      await this.verifyPremiumWithBackend();
-    }
+    // ⚠️ KRİTİK: Premium kaldırıldı. Uygulama tamamen ücretsiz.
+    // Bonus modal zaten new_result.html'de (Asıl Analiz sekmesi) — analiz
+    // tıklamasında AdMob Rewarded Interstitial gösterilir.
+    // Bu fonksiyon sadece doğrudan onSuccess çağırır; koşul/limit yok.
 
-    if (!this.canAnalyze()) {
-      console.log("[ORBIS] Analiz yapılamaz - limit aşıldı");
+    // Sayaçları güncelle (analytics için)
+    this.state.todayUsage = (this.state.todayUsage || 0) + 1;
+    this.state.totalAnalyses = (this.state.totalAnalyses || 0) + 1;
+    this.saveState();
+    this.updateUI();
 
-      // GA: Limit aşıldı event'i
-      this.trackEvent("analysis_limit_reached", {
-        today_usage: this.state.todayUsage,
-        daily_limit: this.getDailyLimit(),
-      });
+    // GA: analiz event'i
+    this.trackEvent("analysis_started", {
+      total_analyses: this.state.totalAnalyses,
+      today_usage: this.state.todayUsage,
+    });
 
-      this.showLimitReachedModal();
-      if (onCancel) {
-        console.log("[ORBIS] Calling onCancel...");
-        onCancel();
-      }
-      return;
-    }
+    console.log(
+      "[ORBIS] Doğrudan analiz başlatıldı (limit/reklam kontrolü yok), bugünkü kullanım:",
+      this.state.todayUsage
+    );
 
-    // Premium kullanıcı - reklamsız, sınırsız
-    if (this.state.isPremium) {
-      this.state.todayUsage++;
-      this.state.totalAnalyses++;
-      this.saveState();
-      this.updateUI();
-
-      // GA: Premium analiz event'i
-      this.trackEvent("analysis_completed", {
-        analysis_type: "premium",
-        total_analyses: this.state.totalAnalyses,
-      });
-
-      console.log("[ORBIS] Premium analiz");
-      if (onSuccess) {
-        console.log("[ORBIS] Calling onSuccess (premium)...");
+    if (onSuccess) {
+      console.log("[ORBIS] Calling onSuccess...");
+      try {
         onSuccess();
-      }
-      return;
-    }
-
-    // Ücretsiz kullanıcı - reklam gerekiyor mu?
-    if (this.needsAd()) {
-      console.log("[ORBIS] Reklam gerekiyor...");
-      // Reklam izletmemiz lazım
-      const adResult = await this.showRewardedAdFlow();
-
-      if (adResult && adResult.success) {
-        this.state.todayUsage++;
-        this.state.todayAdsWatched++;
-        this.state.totalAnalyses++;
-        this.saveState();
-        this.updateUI();
-
-        // Her 3 analizde interstitial göster
-        this.showInterstitialAd();
-
-        // 🆕 REKLAM İZLENDİ - Backend'e kaydet
-        this.recordAdWatchToBackend();
-
-        // GA: Reklamlı analiz event'i
-        this.trackEvent("analysis_completed", {
-          analysis_type: "with_ad",
-          ads_watched_today: this.state.todayAdsWatched,
-          total_analyses: this.state.totalAnalyses,
-        });
-
-        console.log(
-          "[ORBIS] Reklamlı analiz, bugünkü kullanım:",
-          this.state.todayUsage
-        );
-        if (onSuccess) {
-          console.log("[ORBIS] Calling onSuccess (ad watched)...");
-          onSuccess();
-        }
-      } else {
-        // GA: Reklam izlenmedi event'i
-        this.trackEvent("ad_skipped", {
-          ad_type: "rewarded",
-          reason: (adResult && adResult.reason) || "unknown",
-        });
-
-        console.log("[ORBIS] Reklam izlenmedi / başarısız. reason:", adResult && adResult.reason);
-        if (onCancel) {
-          console.log("[ORBIS] Calling onCancel with reason...");
-          // Yeni imza: onCancel(reason) — dashboard.html bunu toast/alert göstermek için kullanır
-          onCancel((adResult && adResult.reason) || "unknown");
-        }
+        console.log("[ORBIS] onSuccess called successfully");
+      } catch (err) {
+        console.error("[ORBIS] onSuccess error:", err);
       }
     } else {
-      // İlk gün, ilk 3 analiz - reklamsız
-      this.state.todayUsage++;
-      this.state.totalAnalyses++;
-      this.saveState();
-      this.updateUI();
-
-      // GA: Ücretsiz analiz event'i
-      this.trackEvent("analysis_completed", {
-        analysis_type: "free_trial",
-        today_usage: this.state.todayUsage,
-        total_analyses: this.state.totalAnalyses,
-      });
-
-      console.log(
-        "[ORBIS] Ücretsiz analiz (hoşgeldin), bugünkü kullanım:",
-        this.state.todayUsage
-      );
-
-      if (onSuccess) {
-        console.log("[ORBIS] Calling onSuccess (free)...");
-        try {
-          onSuccess();
-          console.log("[ORBIS] onSuccess called successfully");
-        } catch (err) {
-          console.error("[ORBIS] onSuccess error:", err);
-        }
-      } else {
-        console.error("[ORBIS] onSuccess is not defined!");
-      }
+      console.error("[ORBIS] onSuccess is not defined!");
     }
   },
 

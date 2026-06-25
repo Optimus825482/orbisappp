@@ -735,21 +735,16 @@ endblock %} {% block head %} {{ super() }}
         window.OrbisBridge.trackFunnelStep( "analysis_flow", "form_submitted", 1 );
       }
 
-      // Validation - latitude/longitude kontrolü
+      // Konum (doğum yeri) kontrolü — ZORUNLU (sunucu için gerekli)
       const latitude = document.getElementById( "latitude" ).value;
       const longitude = document.getElementById( "longitude" ).value;
       const locationInput = document.getElementById( "suggestionInput" );
 
       if ( !latitude || !longitude ) {
-        // Highlight the location input
         locationInput.style.borderColor = "#ef4444";
         locationInput.style.boxShadow = "0 0 0 2px rgba(239, 68, 68, 0.3)";
         locationInput.focus();
-
-        alert(
-          "⚠️ Doğum yeri seçilmedi!\n\nŞehir adını yazın ve açılan listeden bir seçenek seçin.",
-        );
-
+        alert( "⚠️ Doğum yeri seçilmedi!\n\nŞehir adını yazın ve açılan listeden seçin." );
         setTimeout( () => {
           locationInput.style.borderColor = "";
           locationInput.style.boxShadow = "";
@@ -757,169 +752,50 @@ endblock %} {% block head %} {{ super() }}
         return;
       }
 
-      // Date validation
+      // Doğum tarihi — basit format kontrolü
       const birthDateEl = document.getElementById( "birth_date" );
       const birthDateDisplay = birthDateEl.value;
-
       if ( !birthDateDisplay || birthDateDisplay.length !== 10 ) {
-        alert(
-          "Lütfen doğum tarihini GG/AA/YYYY formatında girin!\nÖrnek: 19/06/1982",
-        );
         birthDateEl.focus();
+        alert( "Lütfen doğum tarihini GG/AA/YYYY formatında girin!\nÖrnek: 19/06/1982" );
         return;
       }
-
-      // Validate date
-      if ( !isValidDate( birthDateDisplay ) ) {
-        alert(
-          "Geçersiz tarih!\n\nFormat: GG/AA/YYYY\nÖrnek: 19/06/1982\n\nGün: 01-31\nAy: 01-12\nYıl: 1900-2100",
-        );
-        birthDateEl.style.borderColor = "#ef4444";
-        birthDateEl.focus();
-        setTimeout( () => ( birthDateEl.style.borderColor = "" ), 3000 );
-        return;
-      }
-
-      // Convert and validate date format
       const convertedDate = convertDateForBackend( birthDateDisplay );
-      if ( !convertedDate ) {
-        alert(
-          "Tarih dönüştürme hatası! GG/AA/YYYY formatında girin.\nÖrnek: 19/06/1982",
-        );
-        return;
-      }
 
-      console.log(
-        "[ORBIS] Form submit - birthDate:",
-        birthDateDisplay,
-        "-> converted:",
-        convertedDate,
-      );
-      console.log( "[ORBIS] Latitude:", latitude, "Longitude:", longitude );
-
-      // Transit date conversion
+      // Transit tarihi — ZORUNLU (analiz için gerekli)
       const transitDateEl = document.getElementById( "transit_date" );
       const transitDateDisplay = transitDateEl.value;
-
-      // Transit validasyonu - ZORUNLU
       if ( !transitDateDisplay || transitDateDisplay.length !== 10 ) {
-        alert(
-          "⚠️ Transit tarihi zorunludur!\n\nLütfen transit tarihini GG/AA/YYYY formatında girin.",
-        );
-        transitDateEl.style.borderColor = "#ef4444";
         transitDateEl.focus();
-        setTimeout( () => ( transitDateEl.style.borderColor = "" ), 3000 );
+        alert( "⚠️ Transit tarihi zorunludur!\n\nGG/AA/YYYY formatında girin.\nÖrnek: 16/01/2026" );
         return;
       }
 
-      if ( !isValidDate( transitDateDisplay ) ) {
-        alert(
-          "Geçersiz transit tarihi!\n\nFormat: GG/AA/YYYY\nÖrnek: 16/01/2026",
-        );
-        transitDateEl.style.borderColor = "#ef4444";
-        transitDateEl.focus();
-        setTimeout( () => ( transitDateEl.style.borderColor = "" ), 3000 );
-        return;
-      }
-
+      // Transit saati — ZORUNLU
       const transitTimeEl = document.getElementById( "transit_time" );
       const transitTimeValue = transitTimeEl.value;
-
       if ( !transitTimeValue || transitTimeValue.length < 4 ) {
-        alert(
-          "⚠️ Transit saati zorunludur!\n\nLütfen transit saatini SS:DD formatında girin.",
-        );
-        transitTimeEl.style.borderColor = "#ef4444";
         transitTimeEl.focus();
-        setTimeout( () => ( transitTimeEl.style.borderColor = "" ), 3000 );
+        alert( "⚠️ Transit saati zorunludur!\n\nSS:DD formatında girin." );
         return;
       }
 
-      // Transit konum validasyonu
+      // Transit konumu — ZORUNLU
       const transitLatitude = document.getElementById( "transit_latitude" ).value;
-      const transitLongitude =
-        document.getElementById( "transit_longitude" ).value;
-      const transitLocationInput = document.getElementById(
-        "transit_location_search",
-      );
-
+      const transitLongitude = document.getElementById( "transit_longitude" ).value;
       if ( !transitLatitude || !transitLongitude ) {
+        const transitLocationInput = document.getElementById( "transit_location_search" );
         transitLocationInput.style.borderColor = "#ef4444";
-        transitLocationInput.style.boxShadow =
-          "0 0 0 2px rgba(239, 68, 68, 0.3)";
         transitLocationInput.focus();
-
-        alert(
-          "⚠️ Transit yeri zorunludur!\n\nŞehir adını yazın ve listeden seçin veya 📍 butonuna tıklayarak mevcut konumunuzu kullanın.",
-        );
-
-        setTimeout( () => {
-          transitLocationInput.style.borderColor = "";
-          transitLocationInput.style.boxShadow = "";
-        }, 3000 );
+        alert( "⚠️ Transit yeri zorunludur!\n\nŞehir adını yazın ve listeden seçin veya 📍 butonunu kullanın." );
         return;
       }
 
-      // Reklam kontrolü yap
-      if ( window.OrbisBridge ) {
-        console.log( "[ORBIS] Calling OrbisBridge.requestAnalysis..." );
+      console.log( "[ORBIS] Form submit - birthDate:", birthDateDisplay, "-> converted:", convertedDate );
+      console.log( "[ORBIS] Latitude:", latitude, "Longitude:", longitude );
 
-        // requestAnalysis async fonksiyon, callback yerine Promise kullan
-        const successCallback = function () {
-          console.log( "[ORBIS] requestAnalysis SUCCESS callback triggered" );
-          try {
-            submitForm( birthDateDisplay, transitDateDisplay, convertedDate );
-          } catch ( err ) {
-            console.error( "[ORBIS] Error in success callback:", err );
-            alert( "Hata: " + err.message );
-          }
-        };
-
-        const cancelCallback = function (reason) {
-          console.log( "[ORBIS] Analiz iptal edildi. reason:", reason );
-
-          // Loading overlay'i HER DURUMDA gizle
-          const loadingEl = document.getElementById( "loadingOverlay" );
-          if ( loadingEl ) {
-            $( loadingEl ).addClass( "hidden" ).removeClass( "flex" );
-          }
-
-          // Reason bilgisini UI'a yansıt
-          // Öncelik sırası: OrbisBridge.showAdErrorToast > OrbisBridge.explainAdFail > fallback alert
-          if ( window.OrbisBridge && typeof window.OrbisBridge.explainAdFail === "function" ) {
-            const msg = window.OrbisBridge.explainAdFail( reason );
-            if ( msg ) {
-              if ( typeof window.OrbisBridge.showAdErrorToast === "function" ) {
-                window.OrbisBridge.showAdErrorToast( msg, reason );
-              } else {
-                // Fallback: native alert
-                alert( "⚠️ " + msg );
-              }
-              return;
-            }
-            // msg null ise (örn. user_cancelled) — hiçbir şey gösterme, sessizce çık
-            return;
-          }
-
-          // OrbisBridge yoksa fallback
-          if ( reason ) {
-            alert( "⚠️ Analiz başlatılamadı. Tekrar deneyin. (kod: " + reason + ")" );
-          }
-        };
-
-        // Async fonksiyonu çağır
-        try {
-          window.OrbisBridge.requestAnalysis( successCallback, cancelCallback );
-        } catch ( err ) {
-          console.error( "[ORBIS] requestAnalysis error:", err );
-          // Hata olursa direkt submit et
-          submitForm( birthDateDisplay, transitDateDisplay, convertedDate );
-        }
-      } else {
-        console.log( "[ORBIS] No OrbisBridge, direct submit" );
-        // Bridge yoksa direkt submit
-        submitForm( birthDateDisplay, transitDateDisplay, convertedDate );
-      }
+      // Doğrudan submit — reklam kontrolü yok, OrbisBridge'e bağlı değil
+      submitForm( birthDateDisplay, transitDateDisplay, convertedDate );
     } );
 
     async function submitForm(
