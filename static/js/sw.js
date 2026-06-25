@@ -1,4 +1,4 @@
-const CACHE_NAME = "orbis-v5"; // v5: new_result.html async/await fix
+const CACHE_NAME = "orbis-v6"; // v6: new_result.html async/await fix deployed
 const STATIC_ASSETS = [
   "/",
   "/static/css/tailwind.output.css",
@@ -12,7 +12,7 @@ const STATIC_ASSETS = [
 
 // Install: cache static assets
 self.addEventListener("install", (event) => {
-  console.log("[SW] Installing v4...");
+  console.log("[SW] Installing v6...");
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(STATIC_ASSETS).catch((err) => {
