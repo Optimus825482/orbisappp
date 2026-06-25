@@ -1213,19 +1213,25 @@ const OrbisBridge = {
           // Yeni reklam yükle
           this.loadRewardedAd();
 
+          // ⚠️ KRİTİK: Native AdMob başarısızsa web modal fallback tetikle.
+          // Genişletilmiş whitelist: -1 (NO_FILL / internal), 0, 1, 2, 3, tüm sayılar
+          // ve "ad_load_failed:*", "ad_show_failed:*", "ad_timeout" hepsi.
+          const isAdLoadFailed = typeof reason === "string" && reason.startsWith("ad_load_failed");
+          const isAdShowFailed = typeof reason === "string" && reason.startsWith("ad_show_failed");
+          const isAdTimeout = reason === "ad_timeout";
+
           const needsFallback =
             success === false &&
             this.state.isNative &&
-            (reason === "ad_load_failed:3" ||
-              reason === "ad_load_failed:0" ||
-              reason === "ad_timeout" ||
-              reason === "ad_show_failed");
+            (isAdLoadFailed || isAdShowFailed || isAdTimeout);
 
           if (needsFallback) {
             console.log(
               "[ORBIS] AdMob native başarısız, web modal fallback deneniyor. reason:",
               reason
             );
+            // Kullanıcıya bilgi ver — neden reklam gösterilemedi
+            this.showAdLoadError(reason);
             // Web modal fallback dene (async). Kullanıcı seçerse success=true döner.
             this.showWebRewardedFallback(reason)
               .then((webResult) => {
