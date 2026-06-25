@@ -2872,10 +2872,6 @@ super() }}
         console.warn("[ORBIS] ⚠️ Monetization record error (non-fatal):", recordError);
       }
     
-      // Device ID ve email al (kullanım takibi için)
-      const deviceId = localStorage.getItem( 'orbis_device_id' ) || 'web_' + Date.now();
-      const userEmail = window.OrbisFirebase?.getCurrentUser()?.email || null;
-
       fetch( "/api/get_ai_interpretation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
