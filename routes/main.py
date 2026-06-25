@@ -350,23 +350,36 @@ def show_results():
 @bp.route("/api/get_ai_interpretation", methods=["POST"])
 @handle_errors("AI yorum alınamadı")
 def api_get_ai_interpretation():
-    """AI Yorum API - Günlük 3 ücretsiz yorum limiti var"""
+    """AI Yorum API - Sadece native (Android) icin reklam zorunlulugu var.
+    PWA istemcilerde limitsiz erisim saglanir (AdMob PWA'da calismaz)."""
     data = request.get_json()
     interpretation_type = data.get("interpretation_type", "daily")
     astro_data = data.get("astro_data", {})
     user_name = data.get("user_name", "Değerli Danışanım")
-    
+
     # Kullanım kontrolü için device_id ve email
     device_id = data.get("device_id")
     email = data.get("email")
-    
-    # Kullanım limiti kontrolü
-    if device_id:
+
+    # ═══════════════════════════════════════════════════════════════
+    # PWA tespiti: Web istemcilerde reklam zorunlulugu yok
+    # ═══════════════════════════════════════════════════════════════
+    user_agent = request.headers.get('User-Agent', '')
+    client_platform = request.headers.get('X-Client-Platform', '').lower()
+    is_pwa = (
+        'capacitor' not in user_agent.lower() and
+        client_platform != 'capacitor' and
+        client_platform != 'native' and
+        client_platform != 'android'
+    )
+
+    # Kullanım limiti kontrolü — sadece native için
+    if device_id and not is_pwa:
         from monetization.usage_tracker import UsageTracker
         usage_tracker = UsageTracker()
-        
+
         can_use = usage_tracker.can_use_feature(device_id, "ai_interpretation", email)
-        
+
         if not can_use.get("allowed"):
             return jsonify({
                 "success": False,
@@ -375,7 +388,7 @@ def api_get_ai_interpretation():
                 "remaining": 0,
                 "requires_ad": True
             }), 429
-    
+
     # Ek parametreler (tarih, dönem vb.) - hem Türkçe hem İngilizce destekle
     extra_params = {
         "date": data.get("date") or data.get("tarih"),
@@ -391,11 +404,11 @@ def api_get_ai_interpretation():
     result = get_ai_interpretation_engine_service(
         astro_data, interpretation_type, user_name, **extra_params
     )
-    
+
     # Başarılı yorum sonrası → kullanımı say + stats counter güncelle
     if result.get("success"):
-        # Kullanımı kaydet
-        if device_id:
+        # Kullanımı kaydet — sadece native için
+        if device_id and not is_pwa:
             from monetization.usage_tracker import UsageTracker
             usage_tracker = UsageTracker()
             usage_info = usage_tracker.record_usage(device_id, "ai_interpretation", email)
@@ -403,14 +416,20 @@ def api_get_ai_interpretation():
                 "remaining": usage_info.get("remaining", 0),
                 "requires_ad": usage_info.get("requires_ad", True)
             }
-        
+        else:
+            # PWA: reklam kontrolü yok
+            result["usage"] = {
+                "remaining": 999,
+                "requires_ad": False
+            }
+
         # Stats counter: analiz sayısını artır
         try:
             from services.stats_counter import stats_counter
             stats_counter.on_analysis_completed()
         except Exception:
             pass
-    
+
     return jsonify(result)
 
 
@@ -496,13 +515,13 @@ def account_delete_page():
 def api_check_usage():
     """
     Kullanıcının günlük reklam izleme hakkını kontrol et
-    
+
     Request:
     {
         "device_id": "device_xxx",
         "email": "user@example.com"  # optional
     }
-    
+
     Response:
     {
         "allowed": true/false,
@@ -511,27 +530,54 @@ def api_check_usage():
         "premium_price": 30.0,
         "message": "..."
     }
+
+    PWA (web) istemcileri icin AdMob calismadigi icin reklam zorunlulugu
+    kaldirilir. Sadece native (Android/Capacitor) istemcilerde reklam istenir.
     """
     from monetization.usage_tracker import UsageTracker
-    
+
     data = request.get_json()
     device_id = data.get('device_id')
     email = data.get('email')
-    
+
     logger.info(f"[API] check_usage - device_id: {device_id}, email: {email}")
-    
+
     if not device_id:
         logger.error("[API] check_usage - device_id missing")
         return jsonify({
             "error": "MISSING_DEVICE_ID",
             "message": "device_id required"
         }), 400
-    
+
+    # ═══════════════════════════════════════════════════════════════
+    # PWA tespiti: Sadece native (Capacitor) istemcilerde reklam zorunlu
+    # Capacitor native platformda X-Client-Platform header'i 'capacitor' veya
+    # User-Agent 'Capacitor' icerir. PWA'da bunlar yok.
+    # ═══════════════════════════════════════════════════════════════
+    user_agent = request.headers.get('User-Agent', '')
+    client_platform = request.headers.get('X-Client-Platform', '').lower()
+    is_pwa = (
+        'capacitor' not in user_agent.lower() and
+        client_platform != 'capacitor' and
+        client_platform != 'native' and
+        client_platform != 'android'
+    )
+
+    if is_pwa:
+        logger.info(f"[API] check_usage - PWA istemci tespit edildi, reklam zorunlulugu yok (UA: {user_agent[:50]})")
+        return jsonify({
+            "allowed": True,
+            "requires_ad": False,
+            "remaining": 999,
+            "message": "PWA istemci - reklam zorunlulugu yok",
+            "platform": "pwa"
+        })
+
     tracker = UsageTracker()
     usage = tracker.can_use_feature(device_id, 'ad_watch', email)
-    
+
     logger.info(f"[API] check_usage result: {usage}")
-    
+
     return jsonify(usage)
 
 
@@ -540,47 +586,71 @@ def api_check_usage():
 def api_record_ad_watch():
     """
     Reklam izleme kaydını tut
-    
+
     Request:
     {
         "device_id": "device_xxx",
         "email": "user@example.com"  # optional
     }
-    
+
     Response:
     {
         "success": true,
         "remaining": 1,
         "today_usage": 2
     }
+
+    PWA istemcilerinde AdMob calismadigi icin bu endpoint no-op davranir.
     """
+    # ═══════════════════════════════════════════════════════════════
+    # PWA tespiti: Web istemcilerde no-op (AdMob sadece native'de calisir)
+    # ═══════════════════════════════════════════════════════════════
+    user_agent = request.headers.get('User-Agent', '')
+    client_platform = request.headers.get('X-Client-Platform', '').lower()
+    is_pwa = (
+        'capacitor' not in user_agent.lower() and
+        client_platform != 'capacitor' and
+        client_platform != 'native' and
+        client_platform != 'android'
+    )
+
+    if is_pwa:
+        logger.info(f"[API] record_ad_watch - PWA istemci, no-op (UA: {user_agent[:50]})")
+        return jsonify({
+            "success": True,
+            "remaining": 999,
+            "today_usage": 0,
+            "platform": "pwa",
+            "message": "PWA - reklam kaydedilmedi"
+        })
+
     from monetization.usage_tracker import UsageTracker
-    
+
     data = request.get_json()
     device_id = data.get('device_id')
     email = data.get('email')
-    
+
     logger.info(f"[API] record_ad_watch - device_id: {device_id}, email: {email}")
-    
+
     if not device_id:
         logger.error("[API] record_ad_watch - device_id missing")
         return jsonify({
             "error": "MISSING_DEVICE_ID",
             "message": "device_id required"
         }), 400
-    
+
     tracker = UsageTracker()
     result = tracker.record_usage(device_id, 'ad_watch', email)
-    
+
     logger.info(f"[API] record_ad_watch result: {result}")
-    
+
     # Stats counter: bagimsiz analiz sayisini da artir
     try:
         from services.stats_counter import stats_counter
         stats_counter.on_analysis_completed()
     except Exception:
         pass
-    
+
     return jsonify({
         "success": True,
         "remaining": result.get('remaining'),

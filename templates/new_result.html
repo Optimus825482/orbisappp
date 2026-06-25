@@ -2478,7 +2478,16 @@ super() }}
     console.log( "[ORBIS] 🔍 AI Comment - Device ID:", deviceId );
     console.log( "[ORBIS] 🔍 AI Comment - Email:", userEmail );
 
-    // Kullanım kontrolü
+    // ═══════════════════════════════════════════════════════════════
+    // PLATFORM TESPİTİ: Sadece Android (native) için reklam zorunlu
+    // PWA'da AdMob zaten reklam göstermiyor, bu yüzden web'de bypass
+    // ═══════════════════════════════════════════════════════════════
+    const isNativeApp = typeof window.Capacitor !== 'undefined' &&
+                        typeof window.Capacitor.isNativePlatform === 'function' &&
+                        window.Capacitor.isNativePlatform();
+    console.log("[ORBIS] 📱 Platform:", isNativeApp ? 'Native (Android)' : 'PWA/Web');
+
+    // Kullanım kontrolü — PWA için sadece bilgi amaçlı, limit uygulanmaz
     const usageResponse = await fetch( '/api/check_usage', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2488,89 +2497,101 @@ super() }}
 
     console.log( "[ORBIS] ✅ AI Comment usage check:", usage );
     console.log( "[ORBIS] 📊 Remaining:", usage.remaining );
-    console.log( "[ORBIS] 🎬 Requires ad:", usage.requires_ad );
+    console.log( "[ORBIS] 🎬 Requires ad (server):", usage.requires_ad );
     console.log( "[ORBIS] 💎 Is premium:", usage.is_premium );
 
-    // Limit doldu mu?
-    if ( !usage.allowed ) {
-      $body.html( `
+    // ═══════════════════════════════════════════════════════════════
+    // PWA BYPASS: Web'de hiçbir reklam/limit kontrolü uygulanmaz
+    // Çünkü AdMob PWA'da çalışmıyor ve kafa karıştırıyor
+    // ═══════════════════════════════════════════════════════════════
+    if (!isNativeApp) {
+      console.log("[ORBIS] 🌐 PWA: Reklam kontrolü bypass ediliyor (AdMob sadece native'de çalışır)");
+      // usage.allowed kontrolü PWA için de yok — sınırsız erişim
+      // usage.requires_ad kontrolü PWA için yok — direkt devam
+    } else {
+      // Native (Android) için mevcut reklam akışı
+      // Limit doldu mu?
+      if ( !usage.allowed ) {
+        $body.html( `
+              <div class="flex flex-col items-center justify-center py-8 px-4 text-center">
+                  <div class="w-20 h-20 rounded-full bg-amber-500/20 flex items-center justify-center mb-6">
+                      <span class="material-icons-round text-4xl text-amber-400">lock</span>
+                  </div>
+                  <h3 class="text-white font-bold text-lg mb-3">Reklam İzleme Gerekli</h3>
+                  <p class="text-slate-400 text-sm mb-6 max-w-xs">
+                      AI yorum almak icin lutfen kisa bir reklam izleyin.
+                      Uygulamamiz tamamen ucretsizdir.
+                  </p>
+                  <button onclick="closeAIModal()" class="px-6 py-3 bg-slate-700 text-white font-bold rounded-xl active:scale-95 transition-all">
+                      Tamam
+                  </button>
+              </div>
+            `);
+        return;
+      }
+
+      // Reklam izleme gerekli mi?
+      if ( usage.requires_ad ) {
+        console.log( "[ORBIS] 🎬 Rewarded ad required for AI comment, remaining:", usage.remaining );
+
+        // OrbisRewardedAds kontrolü
+        console.log( "[ORBIS] 🔍 Checking OrbisRewardedAds..." );
+        console.log( "[ORBIS] 🔍 window.OrbisRewardedAds:", window.OrbisRewardedAds );
+        console.log( "[ORBIS] 🔍 typeof showForInterpretation:", typeof window.OrbisRewardedAds?.showForInterpretation );
+
+        // Rewarded ad göster - OrbisRewardedAds veya direkt OrbisBridge.showRewardedAd()
+        const showAd = async () => {
+          if (window.OrbisRewardedAds && typeof window.OrbisRewardedAds.showForInterpretation === 'function') {
+            return await window.OrbisRewardedAds.showForInterpretation();
+          }
+          if (window.OrbisBridge && typeof window.OrbisBridge.showRewardedAd === 'function') {
+            return await window.OrbisBridge.showRewardedAd();
+          }
+          return null; // Reklam sistemi yok
+        };
+
+        const rewarded = await showAd();
+        console.log("[ORBIS] 🎁 Rewarded ad result:", rewarded);
+
+        if (rewarded === null) {
+          // Reklam sistemi hic yok - uygulama yeniden baslatilmali
+          console.error("[ORBIS] ❌ OrbisRewardedAds/OrbisBridge not available!");
+          $body.html(`
             <div class="flex flex-col items-center justify-center py-8 px-4 text-center">
-                <div class="w-20 h-20 rounded-full bg-amber-500/20 flex items-center justify-center mb-6">
-                    <span class="material-icons-round text-4xl text-amber-400">lock</span>
-                </div>
-                <h3 class="text-white font-bold text-lg mb-3">Reklam İzleme Gerekli</h3>
-                <p class="text-slate-400 text-sm mb-6 max-w-xs">
-                    AI yorum almak icin lutfen kisa bir reklam izleyin.
-                    Uygulamamiz tamamen ucretsizdir.
-                </p>
-                <button onclick="closeAIModal()" class="px-6 py-3 bg-slate-700 text-white font-bold rounded-xl active:scale-95 transition-all">
-                    Tamam
-                </button>
+              <div class="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center mb-6">
+                <span class="material-icons-round text-4xl text-red-400">error</span>
+              </div>
+              <h3 class="text-white font-bold text-lg mb-3">Reklam Sistemi Yüklenemedi</h3>
+              <p class="text-slate-400 text-sm mb-6 max-w-xs">
+                Lütfen uygulamayı kapatıp tekrar açın.
+              </p>
+              <button onclick="closeAIModal()" class="px-6 py-3 bg-slate-700 text-white font-bold rounded-xl active:scale-95 transition-all">
+                Tamam
+              </button>
             </div>
           `);
-      return;
-    }
-
-    // Reklam izleme gerekli mi?
-    if ( usage.requires_ad ) {
-      console.log( "[ORBIS] 🎬 Rewarded ad required for AI comment, remaining:", usage.remaining );
-
-      // OrbisRewardedAds kontrolü
-      console.log( "[ORBIS] 🔍 Checking OrbisRewardedAds..." );
-      console.log( "[ORBIS] 🔍 window.OrbisRewardedAds:", window.OrbisRewardedAds );
-      console.log( "[ORBIS] 🔍 typeof showForInterpretation:", typeof window.OrbisRewardedAds?.showForInterpretation );
-
-      // Rewarded ad göster - OrbisRewardedAds veya direkt OrbisBridge.showRewardedAd()
-      const showAd = async () => {
-        if (window.OrbisRewardedAds && typeof window.OrbisRewardedAds.showForInterpretation === 'function') {
-          return await window.OrbisRewardedAds.showForInterpretation();
+          return;
         }
-        if (window.OrbisBridge && typeof window.OrbisBridge.showRewardedAd === 'function') {
-          return await window.OrbisBridge.showRewardedAd();
+
+        if (!rewarded) {
+          $body.html(`
+            <div class="flex flex-col items-center justify-center py-8 px-4 text-center">
+              <div class="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center mb-6">
+                <span class="material-icons-round text-4xl text-red-400">error</span>
+              </div>
+              <h3 class="text-white font-bold text-lg mb-3">Reklam İzleme Gerekli</h3>
+              <p class="text-slate-400 text-sm mb-6 max-w-xs">
+                AI yorum okumak için reklam izlemeniz gerekiyor!
+              </p>
+              <button onclick="closeAIModal()" class="px-6 py-3 bg-slate-700 text-white font-bold rounded-xl active:scale-95 transition-all">
+                Tamam
+              </button>
+            </div>
+          `);
+          return;
         }
-        return null; // Reklam sistemi yok
-      };
-
-      const rewarded = await showAd();
-      console.log("[ORBIS] 🎁 Rewarded ad result:", rewarded);
-
-      if (rewarded === null) {
-        // Reklam sistemi hic yok - uygulama yeniden baslatilmali
-        console.error("[ORBIS] ❌ OrbisRewardedAds/OrbisBridge not available!");
-        $body.html(`
-          <div class="flex flex-col items-center justify-center py-8 px-4 text-center">
-            <div class="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center mb-6">
-              <span class="material-icons-round text-4xl text-red-400">error</span>
-            </div>
-            <h3 class="text-white font-bold text-lg mb-3">Reklam Sistemi Yüklenemedi</h3>
-            <p class="text-slate-400 text-sm mb-6 max-w-xs">
-              Lütfen uygulamayı kapatıp tekrar açın.
-            </p>
-            <button onclick="closeAIModal()" class="px-6 py-3 bg-slate-700 text-white font-bold rounded-xl active:scale-95 transition-all">
-              Tamam
-            </button>
-          </div>
-        `);
-        return;
-      }
-
-      if (!rewarded) {
-        $body.html(`
-          <div class="flex flex-col items-center justify-center py-8 px-4 text-center">
-            <div class="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center mb-6">
-              <span class="material-icons-round text-4xl text-red-400">error</span>
-            </div>
-            <h3 class="text-white font-bold text-lg mb-3">Reklam İzleme Gerekli</h3>
-            <p class="text-slate-400 text-sm mb-6 max-w-xs">
-              AI yorum okumak için reklam izlemeniz gerekiyor!
-            </p>
-            <button onclick="closeAIModal()" class="px-6 py-3 bg-slate-700 text-white font-bold rounded-xl active:scale-95 transition-all">
-              Tamam
-            </button>
-          </div>
-        `);
-        return;
-      }
+      } // end if (usage.requires_ad)
+    } // end if (isNativeApp) else
 
       // 🆕 REKLAM İZLENDİ - Backend'e kaydet
       console.log("[ORBIS] 🎬 Recording ad watch to backend...");
