@@ -1204,63 +1204,81 @@ const OrbisBridge = {
 
         // smartResolve: AdMob reason + native-to-web fallback akıllı çözümleyici
         // Başarıda {success:true, reason:null}; başarısızlıkta {success:false, reason}
-        // Native AdMob başarısız olduğunda (no-fill / timeout / load error) web modal
-        // fallback dener — kök neden çözümü.
+        // Native AdMob başarısız olduğunda (no-fill / timeout / load error)
+        // 1) Önce Interstitial fallback dene (AdMob havuzunda daha sık bulunur)
+        // 2) O da başarısızsa web modal fallback
         const smartResolve = (success, reason) => {
           if (notified) return;
           notified = true;
           cleanup();
-          // Yeni reklam yükle
+          // Yeni rewarded reklam yükle
           this.loadRewardedAd();
 
-          // ⚠️ KRİTİK: Native AdMob başarısızsa web modal fallback tetikle.
-          // Genişletilmiş whitelist: -1 (NO_FILL / internal), 0, 1, 2, 3, tüm sayılar
-          // ve "ad_load_failed:*", "ad_show_failed:*", "ad_timeout" hepsi.
+          // ⚠️ KRİTİK: Native AdMob başarısızsa sırasıyla fallback zinciri:
+          //   ad_load_failed / ad_show_failed / ad_timeout durumlarında
+          //   1) Interstitial göster (ödülsüz ama AdMob havuzunda daha sık)
+          //   2) Interstitial de başarısızsa → web modal fallback
           const isAdLoadFailed = typeof reason === "string" && reason.startsWith("ad_load_failed");
           const isAdShowFailed = typeof reason === "string" && reason.startsWith("ad_show_failed");
           const isAdTimeout = reason === "ad_timeout";
 
-          const needsFallback =
+          const needsNativeFallback =
             success === false &&
             this.state.isNative &&
             (isAdLoadFailed || isAdShowFailed || isAdTimeout);
 
-          if (needsFallback) {
+          if (needsNativeFallback) {
             console.log(
-              "[ORBIS] AdMob native başarısız, web modal fallback deneniyor. reason:",
+              "[ORBIS] Rewarded basarisiz, Interstitial fallback deneniyor. reason:",
               reason
             );
-            // Kullanıcıya bilgi ver — neden reklam gösterilemedi
-            this.showAdLoadError(reason);
-            // Web modal fallback dene (async). Kullanıcı seçerse success=true döner.
-            this.showWebRewardedFallback(reason)
-              .then((webResult) => {
-                if (webResult === true) {
+            // Önce Interstitial dene (AdMob policy: ödülsüz reklam — kullanıcıya
+            // teşekkür amaçlı kısa reklam, analiz devam eder)
+            this.showInterstitialAsRewardFallback(reason)
+              .then((interstitialResult) => {
+                if (interstitialResult === true) {
+                  console.log("[ORBIS] Interstitial fallback basarili, analiz devam ediyor");
                   setTimeout(
-                    () =>
-                      resolve({
-                        success: true,
-                        reason: "web_fallback",
-                      }),
+                    () => resolve({ success: true, reason: "interstitial_fallback" }),
                     200
                   );
                 } else {
-                  setTimeout(
-                    () =>
-                      resolve({
-                        success: false,
-                        reason: "user_cancelled",
-                      }),
-                    200
+                  console.log(
+                    "[ORBIS] Interstitial fallback da basarisiz, web modal deneniyor"
                   );
+                  // Web modal fallback dene
+                  this.showWebRewardedFallback(reason)
+                    .then((webResult) => {
+                      setTimeout(
+                        () => resolve({
+                          success: webResult === true,
+                          reason: webResult === true ? "web_fallback" : "user_cancelled",
+                        }),
+                        200
+                      );
+                    })
+                    .catch((err) => {
+                      console.error("[ORBIS] Web fallback hata:", err);
+                      setTimeout(
+                        () => resolve({ success: false, reason }),
+                        200
+                      );
+                    });
                 }
               })
               .catch((err) => {
-                console.error("[ORBIS] Web fallback hata:", err);
-                setTimeout(
-                  () => resolve({ success: false, reason }),
-                  200
-                );
+                console.error("[ORBIS] Interstitial fallback hata:", err);
+                // Hata durumunda direkt web modal
+                this.showWebRewardedFallback(reason)
+                  .then((webResult) => {
+                    setTimeout(
+                      () => resolve({
+                        success: webResult === true,
+                        reason: webResult === true ? "web_fallback" : "user_cancelled",
+                      }),
+                      200
+                    );
+                  });
               });
             return;
           }
@@ -1270,6 +1288,24 @@ const OrbisBridge = {
             200
           );
         };
+
+        // ═══════════════════════════════════════════════════════════════
+        // 3-KATMANLI FALLBACK SİSTEMİ
+        // 1) REWARDED_ANALIZ (en yüksek CPM)
+        // 2) REWARDED (yedek)
+        // 3) Interstitial (son çare - ödülsüz ama AdMob havuzunda daha sık bulunur)
+        //
+        // Google AdMob politikası: Interstitial "ödüllü" değildir. Bu nedenle
+        // success=true set etmiyoruz, sadece kullanıcıya "Yine de Devam Et"
+        // seçeneği sunuyoruz. Yine de NO_FILL yoksa interstitial gösterilir ve
+        // kullanıcı 5sn bekleyip analize devam eder.
+        // ═══════════════════════════════════════════════════════════════
+        const rewardedAdId =
+          adConfig.REWARDED_ANALIZ || adConfig.REWARDED || "ca-app-pub-2444093901783574/9994253824";
+
+        console.log(`[ORBIS] Rewarded ad yükleniyor (ID: ${rewardedAdId})`);
+        this.trackEvent("ad_impression", { ad_type: "rewarded" });
+        await AdMob.showRewardVideoAd();
 
         // Ödül kazanıldı
         const rl = await AdMob.addListener("onRewardedVideoAdReward", () => {
@@ -1493,6 +1529,103 @@ const OrbisBridge = {
         alert("⚠️ " + message);
       } catch (_) {}
     }
+  },
+
+  /**
+   * Rewarded reklam yuklenemediginde Interstitial (Gecis) reklami fallback
+   * olarak gosterir. Interstitial odullu degildir (AdMob policy) ama AdMob
+   * havuzunda daha sik bulunur — NO_FILL olma ihtimali dusuktur.
+   * Kullanici izledikten sonra success=true doner.
+   *
+   * NOT: Google AdMob policy geregi "odullu" reklam yerine interstitial
+   * gostermek riskli olabilir. Bu nedenle burada kullanicinin
+   * rizasini alan bir toast/onay gosterilir.
+   *
+   * @param {string} reason - smartResolve'den gelen reason
+   * @returns {Promise<boolean>} - true = interstitial izlendi, false = basarisiz
+   */
+  showInterstitialAsRewardFallback(reason) {
+    return new Promise(async (resolve) => {
+      if (!this.state.isNative) {
+        resolve(false);
+        return;
+      }
+
+      try {
+        const { AdMob } = Capacitor.Plugins;
+        if (!AdMob) {
+          console.warn("[ORBIS] AdMob plugin yok, interstitial fallback basarisiz");
+          resolve(false);
+          return;
+        }
+
+        const adConfig = this._getAdmob();
+        const interstitialId = adConfig.INTERSTITIAL;
+
+        if (!interstitialId) {
+          console.warn("[ORBIS] Interstitial ad unit ID yok");
+          resolve(false);
+          return;
+        }
+
+        console.log(`[ORBIS] Interstitial fallback hazirlaniyor (ID: ${interstitialId})`);
+
+        // Interstitial'i hazirla
+        await AdMob.prepareInterstitial({
+          adId: interstitialId,
+          isTesting: this.CONFIG.IS_TESTING,
+        });
+
+        // Gosterim tamamlaninca veya hata olunca resolve et
+        let resolved = false;
+        const safeResolve = (val) => {
+          if (resolved) return;
+          resolved = true;
+          cleanupFns.forEach(fn => { try { fn(); } catch(e) {} });
+          resolve(val);
+        };
+
+        let cleanupFns = [];
+
+        const dl = await AdMob.addListener("onInterstitialAdDismissed", () => {
+          console.log("[ORBIS] Interstitial fallback izlendi");
+          this.trackEvent("ad_impression", { ad_type: "interstitial_fallback" });
+          safeResolve(true);
+        });
+        cleanupFns.push(() => dl.remove());
+
+        const fl = await AdMob.addListener("onInterstitialAdFailedToLoad", (err) => {
+          console.error("[ORBIS] Interstitial fallback yuklenemedi:", err);
+          safeResolve(false);
+        });
+        cleanupFns.push(() => fl.remove());
+
+        const fs = await AdMob.addListener("onInterstitialAdFailedToShow", (err) => {
+          console.error("[ORBIS] Interstitial fallback gosterilemedi:", err);
+          safeResolve(false);
+        });
+        cleanupFns.push(() => fs.remove());
+
+        // Timeout - 10 saniye (interstitial genelde 5sn gosterilir)
+        const timeoutId = setTimeout(() => {
+          if (!resolved) {
+            console.warn("[ORBIS] Interstitial fallback timeout (10sn)");
+            safeResolve(false);
+          }
+        }, 10000);
+        cleanupFns.push(() => clearTimeout(timeoutId));
+
+        // 1.5 saniye gecikme: kullanici interstitial'i
+        // "yukleniyor" durumunu gorup kafasini karmasmasin
+        await new Promise(r => setTimeout(r, 1500));
+
+        if (resolved) return;
+        await AdMob.showInterstitial();
+      } catch (e) {
+        console.error("[ORBIS] Interstitial fallback exception:", e);
+        resolve(false);
+      }
+    });
   },
 
   /**
