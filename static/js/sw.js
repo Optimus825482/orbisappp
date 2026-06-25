@@ -1,6 +1,5 @@
-const CACHE_NAME = "orbis-v6"; // v6: new_result.html async/await fix deployed
+const CACHE_NAME = "orbis-v7"; // v7: SW sadece statik dosyalar — HTML'i CACHE'LEME
 const STATIC_ASSETS = [
-  "/",
   "/static/css/tailwind.output.css",
   "/static/css/custom.css",
   "/static/js/app.js",
@@ -12,7 +11,7 @@ const STATIC_ASSETS = [
 
 // Install: cache static assets
 self.addEventListener("install", (event) => {
-  console.log("[SW] Installing v6...");
+  console.log("[SW] Installing v7...");
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(STATIC_ASSETS).catch((err) => {
@@ -53,8 +52,20 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // HTML pages: NETWORK ONLY — asla cache'leme ki deploy hemen görünsün
+  if (
+    event.request.headers.get("accept") &&
+    event.request.headers.get("accept").includes("text/html")
+  ) {
+    event.respondWith(
+      fetch(event.request).catch(
+        () => new Response("Offline", { status: 503 })
+      )
+    );
+    return;
+  }
+
   // Static assets: network first, fallback to cache
-  // html pages: network first (so new deployments show immediately)
   event.respondWith(
     fetch(event.request)
       .then((response) => {
@@ -69,10 +80,6 @@ self.addEventListener("fetch", (event) => {
         // Offline: serve from cache
         return caches.match(event.request).then((cached) => {
           if (cached) return cached;
-          // If html and not in cache, serve index.html (SPA fallback)
-          if (url.pathname !== "/" && !url.pathname.match(/\.\w+$/)) {
-            return caches.match("/");
-          }
           return new Response("Offline", { status: 503 });
         });
       })
