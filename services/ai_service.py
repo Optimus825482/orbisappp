@@ -35,6 +35,10 @@ class AIService:
 - Doğrudan ve net ifadeler
 - Mistik/ezoterik dil KULLANMA
 - Kişiye adıyla hitap et, samimi ama profesyonel
+### 3. UZUNLUK (ÖNEMLİ)
+- Yanitin en az 1500 kelime olsun; bu zorunludur, daha kisa yanit yazma.
+- Konulari tam ac, yarida birakma. Tum bolumleri (kariyer, iliskiler, saglik, finans, spiritüel gelisim, donemsel tavsiyeler) detayli sekilde isle.
+- Her bolum en az 3-4 paragraf icersin, ornekler ve somut tavsiyeler ver.
 """
 
     # Provider ayarlarını cache'le
@@ -170,22 +174,26 @@ class AIService:
                 {"role": "user", "content": prompt},
             ],
             "temperature": 0.3,
-            "max_tokens": 2048,
+            "max_tokens": 4096,  # Uzun analizler yarim kesilmesin
         }
 
         try:
-            async with session.post(url, json=payload, headers=headers, timeout=aiohttp.ClientTimeout(total=30)) as resp:
+            async with session.post(url, json=payload, headers=headers, timeout=aiohttp.ClientTimeout(total=60)) as resp:
                 if resp.status == 200:
                     data = await resp.json()
                     content = data["choices"][0]["message"]["content"]
-                    logger.info(f"[AI] ✅ {name} başarılı")
+                    # Token limitinden dolayi kesilme kontrolu
+                    finish_reason = data["choices"][0].get("finish_reason", "stop")
+                    if finish_reason == "length":
+                        logger.warning(f"[AI] ⚠️ {name} max_tokens'e ulasti, yanit kesilmis olabilir")
+                    logger.info(f"[AI] ✅ {name} başarılı (finish_reason={finish_reason}, len={len(content)})")
                     return {"success": True, "interpretation": self.remove_emojis(content), "provider": name}
                 else:
                     error_text = await resp.text()
                     logger.warning(f"[AI] ❌ {name} hata {resp.status}: {error_text[:200]}")
                     return {"success": False, "error": f"{name}: HTTP {resp.status}", "provider": name}
         except asyncio.TimeoutError:
-            logger.warning(f"[AI] ⏰ {name} timeout (30sn)")
+            logger.warning(f"[AI] ⏰ {name} timeout (60sn)")
             return {"success": False, "error": f"{name}: timeout", "provider": name}
         except Exception as e:
             logger.warning(f"[AI] ❌ {name} exception: {str(e)[:100]}")
