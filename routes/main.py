@@ -679,6 +679,41 @@ def api_heartbeat():
     return jsonify({"success": True})
 
 
+@bp.route("/api/stats/ad-watched", methods=["POST"])
+@handle_errors("Reklam izleme kaydi alinamadi")
+def api_ad_watched():
+    """Bonus AI yorum veya diger reklam izleme kaydi.
+
+    Bonus Rewarded Interstitial (9025146181) izlendiginde dashboard'dan
+    bu endpoint cagrilir. Stats counter guncellenir, admin panelde
+    toplam bonus sayisi gorulur.
+    """
+    from services.stats_counter import stats_counter
+    data = request.get_json() or {}
+    rewarded = data.get("rewarded", False)
+    ad_type = data.get("type", "general")  # 'bonus', 'general', 'analysis'
+
+    # Sadece native istemcide (Capacitor header) say
+    user_agent = request.headers.get('User-Agent', '').lower()
+    client_platform = request.headers.get('X-Client-Platform', '').lower()
+    is_pwa = (
+        'capacitor' not in user_agent and
+        client_platform != 'capacitor' and
+        client_platform != 'native' and
+        client_platform != 'android'
+    )
+
+    if is_pwa:
+        return jsonify({"success": True, "platform": "pwa", "counted": False})
+
+    try:
+        stats_counter.on_ad_watched(rewarded=rewarded)
+    except Exception as e:
+        logger.warning(f"[API] ad_watched stats error (non-fatal): {e}")
+
+    return jsonify({"success": True, "counted": True, "type": ad_type})
+
+
 @bp.route("/api/stats/user-login", methods=["POST"])
 @handle_errors("Giris kaydi alinamadi")
 def api_user_login():
