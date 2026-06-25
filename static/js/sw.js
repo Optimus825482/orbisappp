@@ -1,4 +1,4 @@
-const CACHE_NAME = "orbis-v4";
+const CACHE_NAME = "orbis-v5"; // v5: new_result.html async/await fix
 const STATIC_ASSETS = [
   "/",
   "/static/css/tailwind.output.css",
