@@ -128,7 +128,7 @@ const OrbisFirebase = {
 
       if (isNative) {
         console.log(
-          "[Firebase] Native platform - Capacitor Google Auth kullanılıyor..."
+          "[Firebase] Native platform - Capacitor Google Auth deneniyor..."
         );
 
         // Capacitor Google Auth plugin kontrolü
@@ -149,13 +149,8 @@ const OrbisFirebase = {
         }
 
         if (!GoogleAuth) {
-          console.error("[Firebase] GoogleAuth plugin bulunamadı!");
-          alert(
-            "Google Auth eklentisi bulunamadı.\n\n" +
-              "Lütfen uygulamayı yeniden yükleyin veya " +
-              "destek@orbis.app adresine başvurun."
-          );
-          return null;
+          console.error("[Firebase] GoogleAuth plugin bulunamadı - Browser OAuth fallback deneniyor");
+          return await this._signInWithBrowserOAuth();
         }
 
         try {
@@ -185,33 +180,30 @@ const OrbisFirebase = {
           // Firebase'e giriş yap
           const result = await this.auth.signInWithCredential(credential);
           console.log("[Firebase] Firebase giriş başarılı:", result.user.email);
+          if (window.OrbisAnalytics) window.OrbisAnalytics.event('login', { method: 'google' });
 
           return result.user;
         } catch (nativeError) {
           console.error("[Firebase] Native Google Auth hatası:", nativeError);
 
           // Kullanıcı iptal etti mi?
-          const errorMsg = nativeError.message || JSON.stringify(nativeError);
+          const errorMsg = (nativeError && (nativeError.message || nativeError.errorMessage)) || JSON.stringify(nativeError);
 
           if (
             errorMsg.includes("canceled") ||
             errorMsg.includes("cancelled") ||
             errorMsg.includes("12501") ||
-            errorMsg.includes("user_cancelled")
+            errorMsg.includes("user_cancelled") ||
+            nativeError?.code === "12501"
           ) {
             console.log("[Firebase] Kullanıcı giriş işlemini iptal etti");
             return null;
           }
 
-          // Gerçek hata - kullanıcıya bildir
-          alert(
-            "Google giriş hatası!\n\n" +
-              "Hata: " +
-              errorMsg +
-              "\n\n" +
-              "İpucu: İnternet bağlantınızı kontrol edin ve tekrar deneyin."
-          );
-          return null;
+          // ⚠️ KRİTİK: Native Google Auth başarısız oldu (Play Services / SHA-1 / config sorunu)
+          // Browser OAuth flow'a fallback yap — her durumda çalışır
+          console.warn("[Firebase] Native Google Auth basarisiz, Browser OAuth fallback deneniyor:", errorMsg);
+          return await this._signInWithBrowserOAuth();
         }
       }
 
@@ -225,6 +217,10 @@ const OrbisFirebase = {
       try {
         const result = await this.auth.signInWithPopup(provider);
         console.log("[Firebase] Google ile giriş başarılı:", result.user.email);
+        if (window.OrbisAnalytics) {
+          const isNew = result.additionalUserInfo?.isNewUser;
+          window.OrbisAnalytics.event(isNew ? 'sign_up' : 'login', { method: 'google' });
+        }
         return result.user;
       } catch (popupError) {
         console.error(
@@ -246,6 +242,53 @@ const OrbisFirebase = {
     } catch (error) {
       console.error("[Firebase] Google giriş hatası:", error);
       alert("Giriş sırasında beklenmeyen bir hata oluştu: " + error.message);
+      return null;
+    }
+  },
+
+  /**
+   * Browser-based OAuth fallback — Capacitor Browser plugin ile.
+   * Native Google Auth başarısız olduğunda (Play Services eksik, SHA-1 uyumsuz, vs.)
+   * sistem tarayıcısında OAuth flow'u açarak giriş yapılmasını sağlar.
+   */
+  async _signInWithBrowserOAuth() {
+    try {
+      const isNative =
+        typeof Capacitor !== "undefined" && Capacitor.isNativePlatform();
+
+      if (!isNative) {
+        // Web'de zaten popup deneniyor, bu fallback Web için değil
+        return null;
+      }
+
+      console.log("[Firebase] Browser OAuth fallback başlatılıyor...");
+
+      // Capacitor Browser plugin kontrolü
+      const Browser = (Capacitor.Plugins && Capacitor.Plugins.Browser) ||
+                       (window.Plugins && window.Plugins.Browser);
+
+      if (!Browser) {
+        console.error("[Firebase] Browser plugin yok - Capacitor Browser kurulu olmali");
+        alert(
+          "Google giris simdi musait degil.\n\n" +
+          "Lutfen uygulamayi kapatip Google Play Store'dan guncellestirmisini deneyin."
+        );
+        return null;
+      }
+
+      // Provider ayarla
+      const provider = new firebase.auth.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
+
+      // signInWithRedirect akışı: Capacitor Browser OAuth callback'i yakalar
+      // ve uygulamaya geri doner
+      await this.auth.signInWithRedirect(provider);
+      console.log("[Firebase] Browser OAuth redirect başlatıldı");
+      return null; // Redirect sonrası getRedirectResult() ile user handle edilecek
+
+    } catch (e) {
+      console.error("[Firebase] Browser OAuth fallback hatası:", e);
+      alert("Giris sirasinda hata: " + e.message);
       return null;
     }
   },
