@@ -38,25 +38,24 @@
     },
     rewardedBonus: {
       // 🆕 Bonus AI yorum — analiz sonrası "1 ek yorum kazan" kampanyası.
-      // AdMob panelinden ayrı birim oluşturulacak. Şimdilik rewarded ile shared.
-      // TODO: AdMob panelinde yeni "Ödüllü Geçiş" birimi oluşturup ID'yi buraya yaz
-      prod: "ca-app-pub-2444093901783574/9994253824", // placeholder — güncellenecek
+      // AdMob birimi: "Bonus AI Yorum" (Rewarded Interstitial)
+      prod: "ca-app-pub-2444093901783574/9025146181",
       test: "ca-app-pub-3940256099942544/5224354917",
     },
     appOpen: {
       // 🆕 Uygulama açılışında splash ekranında gösterilecek reklam.
+      // AdMob birimi: "ORBIS App Open" (App Open)
       // NOT: Capacitor @capacitor-community/admob v6'da native App Open desteği yok.
-      // Plugin PR'ında var ama merged değil. İleride native binding ile eklenecek.
-      // TODO: AdMob panelinde "Uygulama açıkken" birimi oluşturup ID'yi buraya yaz
-      prod: "", // placeholder — AdMob'dan oluşturulunca doldurulacak
-      test: "",
+      // Plugin PR'ında var ama merged değil. Şimdilik no-op.
+      prod: "ca-app-pub-2444093901783574/5085901177",
+      test: "ca-app-pub-3940256099942544/925739592",
     },
     nativeAdvanced: {
       // 🆕 Dashboard'da astroloji kartları arasında inline (native görünümlü) reklam.
-      // NOT: Capacitor plugin desteği yok. Native Android (Java) entegrasyonu gerekir.
-      // TODO: AdMob panelinde "Yerel gelişmiş" birimi oluşturup ID'yi buraya yaz
-      prod: "", // placeholder
-      test: "",
+      // AdMob birimi: "ORBIS Native" (Native Advanced)
+      // NOT: Capacitor plugin desteği yok. Şimdilik no-op.
+      prod: "ca-app-pub-2444093901783574/8809945224",
+      test: "ca-app-pub-3940256099942544/2247696110",
     },
   };
 
