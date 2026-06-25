@@ -975,6 +975,12 @@ const OrbisBridge = {
       // Reklamları önceden yükle
       await this.loadRewardedAd();
       await this.loadInterstitialAd();
+      await this.loadBonusRewardedAd();
+
+      // 🆕 App Open reklami (splash ekraninda — Capacitor v6 destegi yoksa no-op)
+      this.showAppOpenAd().catch(err => {
+        console.log("[ORBIS] App Open ad hatasi (desteklenmiyor olabilir):", err);
+      });
 
       // Premium değilse banner göster
       if (!this.state.isPremium) {
@@ -1104,6 +1110,154 @@ const OrbisBridge = {
     } catch (error) {
       console.error("[ORBIS] Rewarded ad yükleme hatası:", error);
     }
+  },
+
+  /**
+   * Bonus Rewarded Interstitial reklami hazirlar.
+   * "1 ek AI yorum kazan" kampanyasi icin kullanilir.
+   * Analiz sonrasi veya dashboard'da bonus butonu tiklandiginda gosterilir.
+   */
+  async loadBonusRewardedAd() {
+    if (!this.state.isNative) return;
+
+    try {
+      const { AdMob } = Capacitor.Plugins;
+      const adConfig = this._getAdmob();
+
+      // Bonus icin ayrilmis rewarded birimini tercih et, yoksa genel rewarded
+      const bonusAdId = adConfig.REWARDED_BONUS || adConfig.REWARDED;
+
+      await AdMob.prepareRewardVideoAd({
+        adId: bonusAdId,
+        isTesting: this.CONFIG.IS_TESTING,
+      });
+
+      console.log(`[ORBIS] Bonus rewarded ad hazir (ID: ${bonusAdId})`);
+    } catch (error) {
+      console.error("[ORBIS] Bonus rewarded ad hazirlama hatasi:", error);
+    }
+  },
+
+  /**
+   * Bonus Rewarded reklami gosterir — analiz sonrasi "ek yorum" kazandirir.
+   * @returns {Promise<{success: boolean, reason: string|null}>}
+   */
+  async showBonusRewardedAd() {
+    return new Promise(async (resolve) => {
+      try {
+        if (!this.state.isNative) {
+          // Web'de basit onay modal
+          const ok = confirm("Bonus AI yorum kazanmak icin reklam izleyin (web fallback)");
+          resolve({ success: ok, reason: ok ? "web_fallback" : "user_cancelled" });
+          return;
+        }
+
+        const { AdMob } = Capacitor.Plugins;
+        if (!AdMob) {
+          resolve({ success: false, reason: "admob_unavailable" });
+          return;
+        }
+
+        const adConfig = this._getAdmob();
+        const bonusAdId = adConfig.REWARDED_BONUS || adConfig.REWARDED;
+
+        let rewarded = false;
+        let resolved = false;
+        const safeResolve = (success, reason) => {
+          if (resolved) return;
+          resolved = true;
+          this.loadBonusRewardedAd();
+          resolve({ success, reason });
+        };
+
+        const cleanupFns = [];
+        const cleanup = () => cleanupFns.forEach(fn => { try { fn(); } catch(_){} });
+
+        const rl = await AdMob.addListener("onRewardedVideoAdReward", () => {
+          console.log("[ORBIS] Bonus odul kazanildi!");
+          rewarded = true;
+          this.trackEvent("ad_reward", { ad_type: "rewarded_bonus" });
+        });
+        cleanupFns.push(() => rl.remove());
+
+        const dl = await AdMob.addListener("onRewardedVideoAdDismissed", () => {
+          safeResolve(rewarded, rewarded ? null : "user_dismissed_without_reward");
+        });
+        cleanupFns.push(() => dl.remove());
+
+        const fl = await AdMob.addListener("onRewardedVideoAdFailedToLoad", (err) => {
+          console.warn("[ORBIS] Bonus rewarded yuklenemedi:", err);
+          safeResolve(false, "ad_load_failed");
+        });
+        cleanupFns.push(() => fl.remove());
+
+        const fs = await AdMob.addListener("onRewardedVideoAdFailedToShow", (err) => {
+          console.warn("[ORBIS] Bonus rewarded gosterilemedi:", err);
+          safeResolve(false, "ad_show_failed");
+        });
+        cleanupFns.push(() => fs.remove());
+
+        const timeoutId = setTimeout(() => safeResolve(false, "ad_timeout"), 30000);
+        cleanupFns.push(() => clearTimeout(timeoutId));
+
+        this.trackEvent("ad_impression", { ad_type: "rewarded_bonus" });
+        await AdMob.showRewardVideoAd();
+      } catch (e) {
+        console.error("[ORBIS] Bonus rewarded hata:", e);
+        resolve({ success: false, reason: "exception" });
+      }
+    });
+  },
+
+  /**
+   * App Open reklami gosterir (splash ekraninda).
+   * NOT: Capacitor @capacitor-community/admob v6'da native App Open destegi yok.
+   * Gelecekte native binding ile eklenecek.
+   * @returns {Promise<boolean>} - true gosterildi, false desteklenmiyor/hata
+   */
+  async showAppOpenAd() {
+    const adConfig = this._getAdmob();
+    const appOpenId = adConfig.appOpenId;
+
+    if (!appOpenId) {
+      console.info("[ORBIS] App Open ad unit ID tanimli degil — ozellik devre disi");
+      return false;
+    }
+
+    if (!this.state.isNative) {
+      console.info("[ORBIS] App Open sadece native (Android) icin");
+      return false;
+    }
+
+    // TODO: Capacitor plugin App Open destegini ekleyince burayi implement et
+    // Su an icin native Android tarafinda AdMob SDK'sini dogrudan cagirmak gerekir.
+    console.warn("[ORBIS] App Open reklam destegi henuz implement edilmedi (Capacitor plugin v6 limiti)");
+    return false;
+  },
+
+  /**
+   * Native Advanced reklami gosterir (dashboard inline reklam).
+   * NOT: Capacitor plugin desteği yok. İleride native binding ile eklenecek.
+   * @param {string} containerId - Reklamin yerlesecegi DOM element ID
+   * @returns {Promise<boolean>} - true gosterildi, false desteklenmiyor/hata
+   */
+  async showNativeAdvancedAd(containerId) {
+    const adConfig = this._getAdmob();
+    const nativeId = adConfig.nativeAdvancedId;
+
+    if (!nativeId) {
+      console.info("[ORBIS] Native Advanced ad unit ID tanimli degil — ozellik devre disi");
+      return false;
+    }
+
+    if (!this.state.isNative) {
+      console.info("[ORBIS] Native Advanced sadece native (Android) icin");
+      return false;
+    }
+
+    // TODO: Capacitor plugin Native Advanced destegini ekleyince burayi implement et
+    console.warn("[ORBIS] Native Advanced reklam destegi henuz implement edilmedi");
+    return false;
   },
 
   async showRewardedAdFlow() {

@@ -36,6 +36,28 @@
       prod: "ca-app-pub-2444093901783574/3701964485",
       test: "ca-app-pub-3940256099942544/5224354917",
     },
+    rewardedBonus: {
+      // 🆕 Bonus AI yorum — analiz sonrası "1 ek yorum kazan" kampanyası.
+      // AdMob panelinden ayrı birim oluşturulacak. Şimdilik rewarded ile shared.
+      // TODO: AdMob panelinde yeni "Ödüllü Geçiş" birimi oluşturup ID'yi buraya yaz
+      prod: "ca-app-pub-2444093901783574/9994253824", // placeholder — güncellenecek
+      test: "ca-app-pub-3940256099942544/5224354917",
+    },
+    appOpen: {
+      // 🆕 Uygulama açılışında splash ekranında gösterilecek reklam.
+      // NOT: Capacitor @capacitor-community/admob v6'da native App Open desteği yok.
+      // Plugin PR'ında var ama merged değil. İleride native binding ile eklenecek.
+      // TODO: AdMob panelinde "Uygulama açıkken" birimi oluşturup ID'yi buraya yaz
+      prod: "", // placeholder — AdMob'dan oluşturulunca doldurulacak
+      test: "",
+    },
+    nativeAdvanced: {
+      // 🆕 Dashboard'da astroloji kartları arasında inline (native görünümlü) reklam.
+      // NOT: Capacitor plugin desteği yok. Native Android (Java) entegrasyonu gerekir.
+      // TODO: AdMob panelinde "Yerel gelişmiş" birimi oluşturup ID'yi buraya yaz
+      prod: "", // placeholder
+      test: "",
+    },
   };
 
   function unit(key) {
@@ -50,6 +72,24 @@
     return id || unit("rewardedInterstitial");
   }
 
+  function rewardedBonusId() {
+    // Bonus AI yorum birimi; boşsa rewardedInterstitial fallback.
+    const id = unit("rewardedBonus");
+    return id || unit("rewardedInterstitial");
+  }
+
+  function appOpenId() {
+    // App Open reklamı; boşsa null döner (özellik devre dışı).
+    const id = unit("appOpen");
+    return id || null;
+  }
+
+  function nativeAdvancedId() {
+    // Native Advanced reklamı; boşsa null döner.
+    const id = unit("nativeAdvanced");
+    return id || null;
+  }
+
   window.ADMOB_CONFIG = {
     IS_TEST: IS_TEST,
     AD_UNITS: AD_UNITS,
@@ -58,7 +98,13 @@
     interstitialId: unit("interstitial"),
     rewardedInterstitialId: unit("rewardedInterstitial"),
     rewardedAnalysisId: rewardedAnalysisId(),
+    rewardedBonusId: rewardedBonusId(),
+    appOpenId: appOpenId(),
+    nativeAdvancedId: nativeAdvancedId(),
     unit: unit,
     rewardedAnalysisUnit: rewardedAnalysisId,
+    rewardedBonusUnit: rewardedBonusId,
+    appOpenUnit: appOpenId,
+    nativeAdvancedUnit: nativeAdvancedId,
   };
 })();
