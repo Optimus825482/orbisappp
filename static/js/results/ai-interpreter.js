@@ -33,38 +33,84 @@ async function interpretTab(type) {
   // Dinamik geri sayım sayacı
   const startTime = Date.now();
   $body.html(`
-        <div class="flex flex-col items-center justify-center py-12 gap-5">
+        <div class="flex flex-col items-center justify-center py-10 gap-4">
             <div class="relative w-20 h-20">
                 <svg class="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
                     <circle class="text-slate-700/40" stroke="currentColor" stroke-width="4" fill="none" cx="40" cy="40" r="34"/>
                     <circle id="ai-progress-ring" class="text-primary" stroke="currentColor" stroke-width="4" fill="none" cx="40" cy="40" r="34"
-                        stroke-dasharray="213.6" stroke-dashoffset="0" stroke-linecap="round"/>
+                        stroke-dasharray="213.6" stroke-dashoffset="213.6" stroke-linecap="round"/>
                 </svg>
                 <div class="absolute inset-0 flex items-center justify-center">
                     <span id="ai-elapsed" class="text-lg font-bold text-slate-300">0sn</span>
                 </div>
             </div>
-            <p id="ai-status-text" class="text-sm text-slate-400">Kozmik veriler analiz ediliyor...</p>
+            <p id="ai-status-text" class="text-sm text-slate-400 text-center max-w-xs leading-relaxed">Doğum haritanız hazırlanıyor...</p>
+            <p id="ai-disclaimer" class="text-[10px] text-slate-600 text-center max-w-xs mt-2 hidden">
+                ⚠️ Bu yorumlar yapay zeka tarafından, ileri seviye matematiksel astroloji hesaplamalarına dayanarak oluşturulmuştur. Eğlence amaçlıdır, yatırım veya yaşamsal karar tavsiyesi niteliği taşımaz. Nihai karar her zaman size aittir.
+            </p>
         </div>
     `);
 
-  // Gerçek zamanlı sayaç
+  // Dinamik dönen mesajlar - gizemli, bilgilendirici, eğlenceli
+  const cycleMessages = [
+    // 0-5sn: Hesaplama aşaması
+    "🪐 Doğum haritanızın matematiksel hesaplamaları yapılıyor...",
+    "⭐ Gezegenlerin konumları Swiss Ephemeris ile hesaplanıyor...",
+    "🌙 Ay düğümleri ve tutulma verileri çözümleniyor...",
+    "🔄 139 farklı gezegen açısı değerlendiriliyor...",
+    "📐 Ev girişleri ve ascendant hesaplanıyor...",
+    // 5-10sn: Vedic + derin analiz
+    "🕉️ Vedik astroloji hesaplamaları (Navamsa) yapılıyor...",
+    "📿 Vimshottari Dasha dönemleri sıralanıyor...",
+    "✨ Sabit yıldızların (44 adet) etkileri ölçülüyor...",
+    "🔮 Arap noktaları ve Şans Noktası konumlandırılıyor...",
+    "🌌 Derin harmonik analiz (H5-H12) işleniyor...",
+    // 10-18sn: AI yorumlama
+    "🧠 İleri seviye yapay zeka modelleri verileri yorumluyor...",
+    "🤖 AI astrolojik pattern'leri tanımlıyor...",
+    "📊 Gezegen yerleşimleri yaşam alanlarına göre sınıflandırılıyor...",
+    "💫 Transit etkileri natal haritanızla karşılaştırılıyor...",
+    "🎯 Kişisel yaşam temalarınız belirleniyor...",
+    // 18-28sn: Sentez
+    "🧩 Tüm astrolojik göstergeler birleştiriliyor...",
+    "📝 Kapsamlı yorum metni oluşturuluyor...",
+    "🔍 Kariyer, ilişki, sağlık ve finans başlıkları hazırlanıyor...",
+    "💎 Spiritüel ve karmik içgörüler ekleniyor...",
+    "🌟 Size özel tavsiyeler formüle ediliyor...",
+    // 28+sn: Son rötuş
+    "⚡ Son rötuşlar yapılıyor, az kaldı...",
+    "🌠 Kozmik mesajınız neredeyse hazır...",
+    "🎭 Astroloji bir rehberdir, nihai karar her zaman size aittir...",
+    "📖 Yıldızlar eğilimleri gösterir, kaderi değil...",
+    "✨ Bu yorumlar eğlence amaçlıdır, sezgilerinize güvenin...",
+  ];
+
+  const disclaimerEl = document.getElementById("ai-disclaimer");
   const elapsedEl = document.getElementById("ai-elapsed");
   const statusEl = document.getElementById("ai-status-text");
   const ringEl = document.getElementById("ai-progress-ring");
+  let lastIdx = -1;
+
   const tick = setInterval(() => {
     const sec = Math.round((Date.now() - startTime) / 1000);
     if (elapsedEl) elapsedEl.textContent = sec + "sn";
+
+    // Progress ring: 60sn'de tamamlansın
     if (ringEl) {
-      const offset = Math.max(0, 213.6 - (sec / 45) * 213.6);
-      ringEl.style.strokeDashoffset = offset;
+      const progress = Math.min(sec / 60, 1);
+      ringEl.style.strokeDashoffset = 213.6 * (1 - progress);
     }
-    if (statusEl) {
-      if (sec < 10) statusEl.textContent = "Kozmik veriler analiz ediliyor...";
-      else if (sec < 25) statusEl.textContent = "Gezegen pozisyonları değerlendiriliyor...";
-      else if (sec < 45) statusEl.textContent = "Açılar ve ev etkileşimleri yorumlanıyor...";
-      else if (sec < 65) statusEl.textContent = "Tüm veriler sentezleniyor...";
-      else statusEl.textContent = "Neredeyse tamam, son rötuşlar...";
+
+    // Mesaj döngüsü: her 2-3 saniyede bir değiş
+    const msgIdx = Math.floor(sec / 2.5) % cycleMessages.length;
+    if (msgIdx !== lastIdx && statusEl) {
+      statusEl.textContent = cycleMessages[msgIdx];
+      lastIdx = msgIdx;
+    }
+
+    // 12sn sonra disclaimer göster
+    if (sec >= 12 && disclaimerEl && disclaimerEl.classList.contains("hidden")) {
+      disclaimerEl.classList.remove("hidden");
     }
   }, 1000);
 
