@@ -174,7 +174,7 @@ class AIService:
                 {"role": "user", "content": prompt},
             ],
             "temperature": 0.3,
-            "max_tokens": 4096,  # Uzun analizler yarim kesilmesin
+            "max_tokens": 8192,  # Uzun analizler yarim kesilmesin
         }
 
         try:
@@ -186,7 +186,12 @@ class AIService:
                     finish_reason = data["choices"][0].get("finish_reason", "stop")
                     if finish_reason == "length":
                         logger.warning(f"[AI] ⚠️ {name} max_tokens'e ulasti, yanit kesilmis olabilir")
-                    logger.info(f"[AI] ✅ {name} başarılı (finish_reason={finish_reason}, len={len(content)})")
+                    # content None olabilir (API hatasi veya bos yanit)
+                    content_len = len(content) if content else 0
+                    if not content:
+                        logger.warning(f"[AI] ❌ {name} boş yanit döndü (finish_reason={finish_reason})")
+                        return {"success": False, "error": f"{name}: boş yanit", "provider": name}
+                    logger.info(f"[AI] ✅ {name} başarılı (finish_reason={finish_reason}, len={content_len})")
                     return {"success": True, "interpretation": self.remove_emojis(content), "provider": name}
                 else:
                     error_text = await resp.text()
