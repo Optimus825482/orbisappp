@@ -405,7 +405,7 @@ KISA olsun, uzun yazma. Her başlık 2-3 cümle yeterli.
         }
 
         try:
-            async with session.post(url, json=payload, headers=headers, timeout=aiohttp.ClientTimeout(total=90)) as resp:
+            async with session.post(url, json=payload, headers=headers, timeout=aiohttp.ClientTimeout(total=120)) as resp:
                 if resp.status == 200:
                     data = await resp.json()
                     content = data["choices"][0]["message"]["content"]
