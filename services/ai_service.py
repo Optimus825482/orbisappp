@@ -36,9 +36,9 @@ class AIService:
 - Mistik/ezoterik dil KULLANMA
 - Kişiye adıyla hitap et, samimi ama profesyonel
 ### 3. UZUNLUK (ÖNEMLİ)
-- Yanitin en az 1500 kelime olsun; bu zorunludur, daha kisa yanit yazma.
-- Konulari tam ac, yarida birakma. Tum bolumleri (kariyer, iliskiler, saglik, finans, spiritüel gelisim, donemsel tavsiyeler) detayli sekilde isle.
-- Her bolum en az 3-4 paragraf icersin, ornekler ve somut tavsiyeler ver.
+- Yanitin 500-800 kelime arasi olsun; daha uzun yazma, daha kisa da yazma.
+- Tum onemli basliklari isle ama her birini 1-2 paragrafta ozetle.
+- Gereksiz detay ve tekrardan kacin, somut tavsiyeler odakli ol.
 """
 
     # ════════════════════════════════════════════════════════════════════
@@ -401,7 +401,7 @@ KISA olsun, uzun yazma. Her başlık 2-3 cümle yeterli.
                 {"role": "user", "content": prompt},
             ],
             "temperature": 0.3,
-            "max_tokens": 8192,
+            "max_tokens": 4096,
         }
 
         try:
