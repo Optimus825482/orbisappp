@@ -876,7 +876,10 @@ function displayNatalData(astroData) {
 window.onload = function () {
   console.log("window.onload çağrıldı."); // DEBUG
   const astroDataStr = localStorage.getItem("astro_data");
-  window.astroData = null;
+  // Template'den gelen astroData varsa override etme
+  if (!window.astroData) {
+    window.astroData = null;
+  }
   window.userName = null;
   window.birthPlaceName = null;
 
