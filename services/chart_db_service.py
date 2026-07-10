@@ -360,24 +360,40 @@ def smart_calculate(birth_date, birth_time, latitude, longitude,
     
     natal_key = _make_natal_key(birth_date_str, birth_time_str, lat, lon)
     
-    # ═══ ADIM 1: KALICI + GÜNLÜK VERİYİ KONTROL ET ═══
+    # ═══ ADIM 1: KALICI NATAL VERİYİ KONTROL ET ═══
+    # Transit HER SEFERİNDE taze hesaplanır (daily cache kaldırıldı)
     cached_natal = get_natal_chart(birth_date_str, birth_time_str, lat, lon)
-    cached_transit = get_daily_transit(
-        transit_date_str, lat, lon, birth_date_str, birth_time_str
-    )
-    
-    # Her ikisi de varsa → cache'den döndür (EN HIZLI YOL)
-    if cached_natal and cached_transit:
-        logger.info(f"[ChartDB] ⚡ FULL CACHE HIT - Hesaplama atlanıyor!")
+
+    # Natal cache varsa hesaplamayı atla, transit her zaman taze
+    if cached_natal:
+        logger.info(f"[ChartDB] ⚡ NATAL CACHE HIT - Transit taze hesaplanıyor...")
         result = {}
         result.update(cached_natal)
-        result.update(cached_transit)
-        result["_cache_status"] = "full_hit"
-        result["_natal_key"] = natal_key
-        return result
-    
-    # ═══ ADIM 2: EN AZ BİR VERİ EKSİK → HESAPLA ═══
-    logger.info(f"[ChartDB] 🔄 Hesaplama gerekli - Kalıcı: {'HIT' if cached_natal else 'MISS'}, Günlük: {'HIT' if cached_transit else 'MISS'}")
+        # Transit taze hesapla
+        transit_info_with_time = {
+            "date": transit_date_str,
+            "time": datetime.now().strftime("%H:%M"),
+            "latitude": lat,
+            "longitude": lon,
+        }
+        fresh_astro = calculate_astro_data(
+            birth_date=birth_date,
+            birth_time=birth_time,
+            latitude=latitude,
+            longitude=longitude,
+            elevation_m=elevation_m,
+            house_system=house_system,
+            transit_info=transit_info_with_time,
+        )
+        if fresh_astro and "error" not in fresh_astro:
+            result.update(fresh_astro)
+            result["_cache_status"] = "natal_cache_transit_fresh"
+            result["_natal_key"] = natal_key
+            # Taze transit cache'le (sonraki istekler için değil, sadece natal için)
+            return result
+
+    # ═══ ADIM 2: NATAL YOK → TAM HESAPLA ═══
+    logger.info(f"[ChartDB] 🔄 Natal MISS - Tam hesaplama gerekli")
     
     # Tam hesaplama yap
     astro_data = calculate_astro_data(
