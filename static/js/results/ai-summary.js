@@ -36,13 +36,20 @@ async function loadAISummary() {
   $btn.prop("disabled", true).addClass("opacity-50");
 
   try {
+    // Sadece birth_chart için gerekli verileri gönder
+    const astroData = window.astroData || {};
+    const BIRTH_CHART_KEYS = ["natal_planet_positions", "natal_houses", "natal_ascendant", "natal_aspects", "natal_additional_points"];
+    const sendData = {};
+    for (const key of BIRTH_CHART_KEYS) {
+      if (astroData[key] !== undefined) sendData[key] = astroData[key];
+    }
     const response = await fetch("/api/get_ai_interpretation", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         interpretation_type: "birth_chart",
-        astro_data: window.astroData,
-        user_name: window.astroData?.user_name || "Kullanıcı",
+        astro_data: sendData,
+        user_name: astroData.user_name || astroData.birth_info?.user_name || "Kullanıcı",
       }),
     });
     const result = await response.json();
