@@ -401,8 +401,7 @@ KISA olsun, uzun yazma. Her başlık 2-3 cümle yeterli.
                 {"role": "user", "content": prompt},
             ],
             "temperature": 0.3,
-            "max_tokens": 32768,
-            # stream: kaldirildi — provider default'u kullan (non-stream JSON)
+            "max_tokens": 8192,
         }
 
         try:

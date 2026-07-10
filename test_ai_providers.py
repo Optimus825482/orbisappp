@@ -75,7 +75,7 @@ async def main(prompt_type="simple"):
             "natal_additional_points": {"True_Node":{"sign":"Yengec","house":10},"Chiron":{"sign":"Boga"},"True_Lilith":{"sign":"Oglak","house":4}},
         })
         prompt = "User: ERKAN ERDEM\n## DOĞUM HARİTASI VE KARAKTER ANALİZİ\nYukarıdaki verileri kullanarak kapsamlı bir doğum haritası analizi yap.\nŞu başlıkları detaylıca işle:\n1. Yükselen burcun kişiliğe etkisi\n2. Ay burcunun duygusal yapıya etkisi\n3. Güneş burcunun temel karaktere etkisi\n4. Gezegenlerin ev yerleşimleri\n5. Önemli açılar ve kişilik dinamikleri\n\nData: %s\n\n## KESİN KURALLAR\n### 1. YASAK TERİMLER (ASLA KULLANMA)\n- Gezegen isimleri, burç isimleri, ev numaraları, açı isimleri, teknik terimler\n### 2. DİL VE ÜSLUP\n- Sade, anlaşılır Türkçe\n- Doğrudan ve net ifadeler\n### 3. UZUNLUK (ÖNEMLİ)\n- Yanitin en az 1500 kelime olsun" % astro_json
-        max_tok = 32768
+        max_tok = 8192
         timeout = 120
     elif prompt_type == "astro":
         prompt = "Introduce yourself in 3 sentences."
