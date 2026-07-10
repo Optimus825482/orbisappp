@@ -401,7 +401,8 @@ KISA olsun, uzun yazma. Her başlık 2-3 cümle yeterli.
                 {"role": "user", "content": prompt},
             ],
             "temperature": 0.3,
-            "max_tokens": 32768,  # DeepSeek-V4-Pro 384K destekler, yanıt kesilmesin
+            "max_tokens": 32768,
+            "stream": False,  # Streaming kapat — 502/reset hatasını önler
         }
 
         try:
