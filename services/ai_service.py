@@ -402,7 +402,7 @@ KISA olsun, uzun yazma. Her başlık 2-3 cümle yeterli.
             ],
             "temperature": 0.3,
             "max_tokens": 32768,
-            "stream": False,  # Streaming kapat — 502/reset hatasını önler
+            # stream: kaldirildi — provider default'u kullan (non-stream JSON)
         }
 
         try:

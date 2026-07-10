@@ -36,7 +36,7 @@ async def test_one(session, p, prompt, max_tokens=256, timeout=30):
     if not url.endswith("/chat/completions"):
         url += "/chat/completions"
     payload = dict(model=p["model"], messages=[dict(role="user", content=prompt)],
-                   max_tokens=max_tokens, temperature=0.3, stream=False)
+                   max_tokens=max_tokens, temperature=0.3)
     headers = {"Authorization": "Bearer " + p["api_key"], "Content-Type": "application/json"}
     start = time.time()
     try:
