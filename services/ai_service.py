@@ -456,19 +456,45 @@ KISA olsun, uzun yazma. Her başlık 2-3 cümle yeterli.
 
     # Sadece major açılar: Conjunction, Opposition, Square, Trine, Sextile
     MAJOR_ASPECTS = {"Conjunction", "Opposition", "Square", "Trine", "Sextile"}
+    # Sadece ana gezegenler + önemli noktalar arası açılar (asteroid ve uranyenler yok)
+    IMPORTANT_BODIES = {
+        "Sun", "Moon", "Mercury", "Venus", "Mars",
+        "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto",
+        "Ascendant", "MC", "Armc", "True_Node",
+    }
 
     @staticmethod
-    def _deep_trim(data: dict, max_items: int = 25) -> dict:
-        """Büyük dizileri derinlemesine kırp: sadece major açılar, en dar orb'lular, top N."""
+    def _is_important_aspect(item: dict) -> bool:
+        """Sadece ana gezegenler/noktalar arası major açılar, orb < 8"""
+        p1 = item.get("planet1", "")
+        p2 = item.get("planet2", "")
+        aspect = item.get("aspect_type", "")
+        orb = abs(float(item.get("orb", 99)))
+        # Major aspect kontrol
+        if aspect not in AIService.MAJOR_ASPECTS:
+            return False
+        # İki taraf da önemli cisimlerden olmalı
+        if p1 not in AIService.IMPORTANT_BODIES or p2 not in AIService.IMPORTANT_BODIES:
+            return False
+        # Orb sınırı (Conjunction/Opposition: 8, Square/Trine: 7, Sextile: 5)
+        if aspect == "Sextile" and orb > 5:
+            return False
+        if orb > 8:
+            return False
+        return True
+
+    @staticmethod
+    def _deep_trim(data: dict, max_items: int = 30) -> dict:
+        """Büyük dizileri derinlemesine kırp: sadece önemli major açılar, en dar orb'lular."""
         trimmed = {}
         for key, value in data.items():
             if isinstance(value, list) and len(value) > 10:
-                # Açı listeleri: sadece major aspect → orb sıralı → top N
+                # Açı listeleri: sadece önemli major açılar → orb sıralı
                 if all(isinstance(item, dict) and "aspect_type" in item for item in value[:3]):
-                    filtered = [item for item in value if item.get("aspect_type", "") in AIService.MAJOR_ASPECTS]
+                    filtered = [item for item in value if AIService._is_important_aspect(item)]
                     filtered.sort(key=lambda x: abs(float(x.get("orb", 99))))
                     trimmed[key] = filtered[:max_items]
-                    logger.info(f"[AI] Deep trim '{key}': {len(value)} → {len(filtered[:max_items])} (major, top {max_items})")
+                    logger.info(f"[AI] Deep trim '{key}': {len(value)} → {len(filtered[:max_items])} (önemli major açılar)")
 
                 # Sabit yıldızlar: top 10
                 elif all(isinstance(item, dict) and ("star" in str(item).lower() or "name" in item) for item in value[:3]):
