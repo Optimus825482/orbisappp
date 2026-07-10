@@ -1,6 +1,7 @@
 {% extends "layout.html" %} {% block title %}{{ astro_data.user_name if
 astro_data else 'Analiz' }} - ORBIS Sonuçları{% endblock %} {% block head %} {{
 super() }}
+<script>window.astroData = {{ astro_data | tojson | safe if astro_data else 'null' }};</script>
 <!-- Marked for Markdown Parsing -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Results Page Modular CSS (cached) -->
@@ -1775,9 +1776,8 @@ super() }}
 <script src="{{ url_for('static', filename='js/results/cosmic-loader.js') }}"></script>
 <script src="{{ url_for('static', filename='js/results/ai-summary.js') }}"></script>
 <script>
-  const astroData = {{ astro_data| tojson | safe if astro_data else 'null' }};
-  // app.js localStorage'dan override etmesin diye window'a da set et
-  if (astroData) window.astroData = astroData;
+  // window.astroData head'de set edildi, burada da referans oluştur
+  const astroData = window.astroData;
   const orbVideoUrl = "{{ url_for('static', filename='orb.mp4') }}";
   let currentInterpretationText = "";
     let kozmikOzetText = "";
