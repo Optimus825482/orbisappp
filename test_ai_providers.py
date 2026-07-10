@@ -97,9 +97,11 @@ async def main(prompt_type="simple"):
             label = "[%s] %-22s %-20s " % (tag, p["name"][:22], p["model"][:20])
             print(label, end="", flush=True)
             ok, elapsed, content, err = await test_one(session, p, prompt, max_tok, timeout)
-            tok_est = len(content) // 4 if ok else 0
             if ok:
-                print("OK   %6.1fs  ~%dtok" % (elapsed, tok_est))
+                print("OK   %6.1fs" % elapsed)
+                print("--- YANIT (%d chars) ---" % len(content))
+                print(content[:500])
+                print("--- YANIT SONU ---")
             else:
                 print("FAIL %6.1fs  %s" % (elapsed, err[:80]))
     print("=" * 85)
